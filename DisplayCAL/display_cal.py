@@ -65,6 +65,7 @@ from DisplayCAL import (
 )
 from DisplayCAL.argyll import (
     check_set_argyll_bin,
+    get_argyll_download_suffix,
     get_argyll_instrument_config,
     get_argyll_latest_version,
     get_argyll_version,
@@ -655,22 +656,22 @@ def app_update_confirm(
                         value = "x86"
                     finally:
                         winreg.CloseKey(key)
-                    if value.lower() == "amd64":
-                        suffix = "_win64_exe.zip"
-                    else:
-                        # Assume win32
-                        suffix = "_win32_exe.zip"
+                    suffix = get_argyll_download_suffix(
+                        platform_name=sys.platform,
+                        machine=platform.machine(),
+                        windows_processor_architecture=value,
+                    )
                 elif sys.platform == "darwin":
-                    # We only support OS X 10.5+
-                    suffix = "_osx10.6_x86_64_bin.tgz"
+                    suffix = get_argyll_download_suffix(
+                        platform_name=sys.platform, machine=platform.machine()
+                    )
                 else:
                     # Linux
-                    if platform.architecture()[0] == "64bit":
-                        # Assume x86_64
-                        suffix = "_linux_x86_64_bin.tgz"
-                    else:
-                        # Assume x86
-                        suffix = "_linux_x86_bin.tgz"
+                    suffix = get_argyll_download_suffix(
+                        platform_name=sys.platform,
+                        machine=platform.machine(),
+                        architecture_bits=platform.architecture()[0],
+                    )
             elif sys.platform == "win32":
                 if snapshot:
                     # Snapshots are only avaialble as ZIP

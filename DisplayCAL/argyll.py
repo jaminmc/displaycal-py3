@@ -40,6 +40,43 @@ from DisplayCAL.util_str import make_filename_safe
 argyll_utils = {}
 
 
+def get_argyll_download_suffix(
+    platform_name: Optional[str] = None,
+    machine: Optional[str] = None,
+    windows_processor_architecture: Optional[str] = None,
+    architecture_bits: Optional[str] = None,
+) -> str:
+    """Return ArgyllCMS download archive suffix for platform/architecture."""
+    if platform_name is None:
+        platform_name = sys.platform
+    if machine is None:
+        machine = os.uname().machine if hasattr(os, "uname") else ""
+    machine = (machine or "").lower()
+
+    if platform_name == "win32":
+        win_arch = (windows_processor_architecture or machine or "").lower()
+        if win_arch in ("arm64", "aarch64"):
+            return "_win_arm64_exe.zip"
+        if win_arch in ("amd64", "x86_64"):
+            return "_win64_exe.zip"
+        return "_win32_exe.zip"
+
+    if platform_name == "darwin":
+        if machine in ("arm64", "aarch64"):
+            return "_macOS11_arm64_bin.tgz"
+        if machine in ("i386", "i686", "x86"):
+            return "_osx10.4_i86_bin.tgz"
+        return "_osx10.6_x86_64_bin.tgz"
+
+    if architecture_bits is None:
+        architecture_bits = "64bit" if sys.maxsize > 2**32 else "32bit"
+    return (
+        "_linux_x86_64_bin.tgz"
+        if architecture_bits == "64bit"
+        else "_linux_x86_bin.tgz"
+    )
+
+
 def check_argyll_bin(paths: Optional[List[str]] = None) -> bool:
     """Check if the Argyll binaries can be found.
 

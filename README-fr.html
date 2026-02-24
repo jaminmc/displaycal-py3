@@ -215,6 +215,7 @@
                 <li><a href="#help">Obtenir de l’aide (EN)</a></li>
                 <li><a href="#reportbug">Signaler un bogue (EN)</a></li>
                 <li><a href="#discuss">Discussion (EN)</a></li>
+                <li><a href="#todo">À faire / fonctionnalités prévues</a></li>
                 <li><a href="#thanks">Remerciements</a></li>
                 <li><a href="CHANGES.html">Historiques des versions – Journaux des modifications</a></li>
                 <li><a href="#definitions">Définitions</a></li>
@@ -484,6 +485,7 @@
                 <h3>ArgyllCMS</h3>
 
                 <p>Pour utiliser DisplayCAL, vous devez télécharger et installer <a href="https://www.argyllcms.com">ArgyllCMS</a> (1.0 ou plus récent).</p>
+                <p>ArgyllCMS 3.5.0 ajoute des fichiers de référence <code>scanin</code> « Munsell Linear Grayscale ». Si ces fichiers ne sont pas fournis par votre paquet système, installez la version officielle d’ArgyllCMS pour les obtenir.</p>
             </div>
 
             <div id="instruments">
@@ -498,6 +500,8 @@
                     <li>Datacolor Spyder 3 (depuis ArgyllCMS 1.1.0)</li>
                     <li>Datacolor Spyder 4 (depuis ArgyllCMS 1.3.6)</li>
                     <li>Datacolor Spyder 5 (depuis ArgyllCMS 1.7.0)</li>
+                    <li>Datacolor SpyderX2 (depuis ArgyllCMS 3.3.0)</li>
+                    <li>Datacolor Spyder / SpyderPRO 2024 (depuis ArgyllCMS 3.4.0, amélioré en 3.5.0)</li>
                     <li>HP Advanced Profiling Solution (traité comme i1 Display 2)</li>
                     <li>HP DreamColor (traité comme i1 Display 2)</li>
                     <li>Hughski ColorHug (pris en charge sous Linux depuis ArgyllCMS 1.3.6, pris en charge sous Windows avec le nouveau micrologiciel de ColorHug depuis ArgyllCMS 1.5.0, pris en charge de manière entièrement fonctionnelle sous Mac OS X depuis ArgyllCMS 1.6.2)</li>
@@ -521,6 +525,7 @@
                 <h4>Spectromètres</h4>
                 <ul>
                     <li>JETI specbos 1211/1201 (depuis ArgyllCMS 1.6.0)</li>
+                    <li>JETI specbos 2501 (depuis ArgyllCMS 3.3.0, amélioré en 3.5.0)</li>
                     <li>JETI spectraval 1511/1501 (depuis ArgyllCMS 1.9.0)</li>
                     <li>X-Rite ColorMunki Design, ColorMunki Photo (depuis ArgyllCMS 1.1.0)</li>
                     <li>X-Rite/GretagMacbeth i1 Monitor (depuis ArgyllCMS 1.0.3)</li>
@@ -1094,7 +1099,7 @@ Entrez l’adresse IP dans la fenêtre qui s’ouvre (le numéro de port devrait
                             <h4>Tables <abbr title="Profile Connection Space (Espace de connexion du profil)">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr>-vers-périphérique de basse qualité</h4>
                             <p>Choisissez cette option si le profil ne doit être utilisé qu’avec une transposition inverse de gamut périphérique-vers-<abbr title="Profile Connection Space (Espace de connexion du profil)">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr> afin de créer un lien de périphérique (« DeviceLink») ou une LUT 3D (DisplayCAL  utilise toujours une transposition inverse périphérique-vers-<abbr title="Profile Connection Space (Espace de connexion du profil)">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr> du gamut lors de la création de Lien de périphérique/LUT 3D). Ceci réduit le temps de traitement nécessaire pour créer les tables <abbr title="Profile Connection Space (Espace de connexion du profil)">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr>-vers-périphérique. Ne choisissez <strong>pas</strong> cette option si vous désirez installer ou utiliser ce profil par ailleurs.</p>
 
-                            <h4>Améliorer la résolution effective de la table colorimétrique <abbr title="Profile Connection Space (Espace de connexion du profil)">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr>-vers-périphérique</h4>
+                            <h4 id="b2a-enhance-effective-resolution">Améliorer la résolution effective de la table colorimétrique <abbr title="Profile Connection Space (Espace de connexion du profil)">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr>-vers-périphérique</h4>
 
                             <p>Pour utiliser cette option, vous devez sélectionner un profil de type LUT XYZ. Cette option accroît la résolution effective de la table de correspondance couleur colorimétrique <abbr title="Profile Connection Space (Espace de connexion du profil)">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr> vers périphérique en utilisant une matrice afin de limiter l’espace XYZ et de remplir l’ensemble de la mire avec les valeurs obtenues en inversant la table périphérique-vers-<abbr title="Profile Connection Space (Espace de connexion du profil)">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr>, tout en appliquant, de manière optionnelle, un lissage. Si aucune <a href="#settings_profiling_gamutmapping_ciecam02">transposition du gamut CIECAM02</a> n’a été activée pour l’intention de rendu perceptuelle, une table perceptuelle simple mais efficace (qui est à peu près identique à la table colorimétrique, mais qui transpose le point noir à zéro) sera aussi générée.</p>
                             <p>Vous pouvez aussi définir les dimensions de la table de correspondance interpolée. La valeur « Auto » par défaut utilise une résolution de base de 33x33x33 qui est augmentée au besoin et procure un bon équilibre entre la régularité et la précision. Abaisser la résolution peut améliorer la régularité (potentiellement aux dépens d’un peu de précision), alors que l’accroissement de la résolution peut potentiellement rendre le profil moins précis (aux dépens d’un peu de régularité). Notez que les calculs demanderont beaucoup de mémoire (&gt;= 4 Go de RAM sont recommandés afin d’éviter les échanges sur disque) spécialement pour les résolutions les plus élevées.</p>
@@ -1139,6 +1144,18 @@ Entrez l’adresse IP dans la fenêtre qui s’ouvre (le numéro de port devrait
 
                     <dt id="testchart_file">Fichier de mire de test</dt>
                         <dd>Vous pouvez choisir ici les échantillons de test utilisés lors de la caractérisation de l’écran. Le paramètre par défaut optimisé « Auto » prend en compte les caractéristiques réelles de l’écran. Vous pouvez encore augmenter la précision potentielle de votre profil en accroissant le nombre d’échantillons à l’aide du curseur.</dd>
+
+                    <dt id="patch_sequence">Séquence des patchs (activez « Afficher les options avancées » dans le menu « Options »)</dt>
+                        <dd>
+                            <p>Contrôle l’ordre dans lequel les patchs d’une mire de test sont mesurés. « Minimiser le délai de réponse de l’écran » est le réglage par défaut du générateur de patchs de test d’ArgyllCMS, et conduit généralement au temps de mesure global le plus court. Les autres choix (détaillés ci-dessous) visent à mieux gérer certains écrans qui utilisent l’ASBL (automatic static brightness limiting), ce qui peut provoquer des mesures faussées, et devraient être utilisés avec la compensation de dérive du niveau de blanc de l’écran (au prix d’un temps de mesure un peu plus long). Si votre écran n’a pas de problème d’ASBL, il n’est pas nécessaire de modifier ce paramètre.</p>
+                            <ul>
+                                <li><strong>Maximiser la différence de luminosité</strong> ordonne les patchs de façon à obtenir la plus grande différence possible de luminosité entre deux patchs successifs, tout en gardant une sortie lumineuse globale relativement constante (mais croissante) dans le temps. La luminosité d’un patch est calculée via une luminance relative de type sRGB. C’est le réglage recommandé pour traiter l’ASBL si vous ne savez pas lequel choisir.</li>
+                                <li><strong>Maximiser la différence de luma</strong> ordonne les patchs de façon à obtenir la plus grande différence possible de luma entre patchs, tout en gardant une luma globale relativement constante (mais croissante) dans le temps. La luma d’un patch est calculée à partir des coefficients de luma Rec. 709. Dans la plupart des cas, l’ordre obtenu est proche de « Maximiser la différence de luminosité ».</li>
+                                <li><strong>Maximiser la différence RVB</strong> ordonne les patchs de façon à obtenir la plus grande différence possible entre les composantes rouge, verte et bleue des patchs.</li>
+                                <li><strong>Varier la différence RVB</strong> ordonne les patchs de façon à introduire une certaine différence entre les composantes rouge, verte et bleue des patchs.</li>
+                            </ul>
+                            <p>Le meilleur choix pour votre écran avec ASBL dépend de la façon dont l’écran décide de réduire sa luminosité. S’il se base sur la luminance relative (ou la luma), « Maximiser la différence de luminosité » ou « Maximiser la différence de luma » fonctionneront généralement le mieux. Si votre écran utilise un chemin de signal RVB plutôt que YCbCr, « Maximiser la différence RVB » ou « Varier la différence RVB » peuvent donner de meilleurs résultats.</p>
+                        </dd>
 
                     <dt id="testchart_editor">Éditeur de mire de test</dt>
                         <dd>
@@ -1647,6 +1664,9 @@ Entrez l’adresse IP dans la fenêtre qui s’ouvre (le numéro de port devrait
                     <dt id="synthprofile">Créer un profil ICC synthétique…</dt>
                         <dd>Crée un profil ICC synthétique en entrant les coordonnées XYZ ou de chromaticité pour R, V, B et blanc et en choisissant une courbe de réponse de tonalité.</dd>
 
+                    <dt>Avancé › Améliorer la résolution effective de la table colorimétrique PCS-vers-périphérique</dt>
+                        <dd>Voir <a href="#b2a-enhance-effective-resolution">Améliorer la résolution effective de la table colorimétrique PCS-vers-périphérique</a>.</dd>
+
                     <dt>Mesurer la mire de test</dt>
                         <dd>Mesure la mire de test actuellement sélectionnée sur l’écran sélectionné dans son état actuel et crée un fichier <code>.ti3</code> des données des mesures. Le fichier est enregistré sous le chemin d’enregistrement choisi (voir « Choisir le chemin d’enregistrement… » depuis le menu « Fichier ») et avec le même nom de base que celui utilisé pour les profils.</dd>
 
@@ -2134,6 +2154,58 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
             </div>
 
             <p>Désirez-vous entrer en rapport avec moi ou avec d’autres utilisateurs en ce qui concerne DisplayCAL ou des sujets en rapport ? Le <a href="https://displaycal.net/forums/forum/general-discussion/">forum de discussions générales</a> est un bon emplacement où le faire. Vous pouvez aussi me <a href="https://displaycal.net/?fhpe=x52nps3G0aGVoafU0cTalJmgktPI1Q%3D%3D" rel="nofollow">contacter</a> directement.</p>
+        </div>
+
+        <div id="todo">
+            <h2>À faire / fonctionnalités prévues (sans ordre particulier)</h2>
+
+            <ul>
+                <li>Ajouter SMPTE 2084 aux choix de courbe de réponse tonale des profils de simulation et ajouter des mires de vérification adaptées à l’évaluation des écrans HDR.</li>
+                <li>Refactoriser l’implémentation de l’interface de sélection de courbe de réponse tonale pour la LUT 3D, la vérification et la création de profils ICC synthétiques, afin de partager davantage de code.</li>
+                <li>Au premier lancement, guider l’utilisateur dans la configuration de base via un assistant (reporter la vérification des mises à jour de DisplayCAL jusqu’à la fin de l’assistant ?) :
+                    <ul>
+                        <li><del>Vérifier la disponibilité d’ArgyllCMS ; s’il est absent ou obsolète, proposer le téléchargement et l’installation automatiques (envisager les paquets natifs des distributions Linux ?)</del> (implémenté)</li>
+                        <li>Windows uniquement : installer les pilotes de sonde si nécessaire (probablement après avoir vérifié s’ils sont déjà installés)</li>
+                        <li>Vérifier les sondes disponibles et leurs capacités</li>
+                        <li>Effectuer les opérations spécifiques à la sonde lors du premier lancement :
+                            <ul>
+                                <li><del>Importer les fichiers OEM</del> (implémenté)</li>
+                                <li>Choisir/créer une correction de colorimètre si applicable</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+                <li>Lorsqu’une sonde est sélectionnée pour la première fois :
+                    <ul>
+                        <li><del>Vérifier si les fichiers OEM du logiciel du fournisseur ont déjà été importés (si applicable) ; sinon, proposer de le faire.</del> (implémenté dans la v2.1.1.3 Beta et versions ultérieures, après détection des sondes)</li>
+                        <li>Vérifier les corrections de colorimètre, si applicable (depuis le logiciel du fournisseur et la base en ligne, en ignorant cette dernière si un spectro est disponible) ; en l’absence de correction spécifique ou générique exploitable, proposer d’en créer une si possible, de préférence à partir de mesures spectrales de référence, avec l’EDID comme solution de secours sélectionnable par l’utilisateur ? (Vérifier la cohérence des coordonnées xy rouge/vert/bleu/blanc de l’EDID dans ce cas ! Éventuellement par rapport à sRGB et AdobeRGB, les gamuts le plus souvent cités pour les écrans à gamut standard et large gamut ? Comme certains écrans économiques et beaucoup d’écrans de portables peuvent avoir un gamut très limité, un profil « RVB faible gamut » dédié pourrait aussi être nécessaire.)</li>
+                        <li>Les utilisateurs doivent être informés des implications du choix de correction de colorimètre, par exemple :
+                            <ul>
+                                <li>Lorsqu’on utilise une correction créée à partir de mesures spectrales de référence de l’écran spécifique (l’utilisateur a besoin d’un spectro) : précision/correspondance généralement très bonne avec la combinaison écran/sonde de l’utilisateur</li>
+                                <li>Lorsqu’on utilise une correction générique fournie par le fabricant : précision/correspondance de bonne (?) (p. ex. i1 DisplayPro, ColorMunki Display) à médiocre (?) (p. ex. i1 Display 1/2/LT, Huey, ColorHug) pour la combinaison écran/sonde de l’utilisateur ; dans le cas des CCSS, elles sont considérées comme préférables aux corrections fournies par d’autres utilisateurs car elles reposent sur du matériel de laboratoire (haute résolution spectrale) utilisé par le fabricant.</li>
+                                <li>Lorsqu’on utilise une correction fournie par un autre utilisateur pour la même combinaison écran/sonde : précision/correspondance de bonne (?) (p. ex. i1 DisplayPro, ColorMunki Display, DTP94) à médiocre (?) (p. ex. i1 Display 1/2/LT, Huey, ColorHug) pour la combinaison écran/sonde de l’utilisateur</li>
+                                <li>Lorsqu’on utilise l’EDID de l’écran spécifique comme référence : précision/correspondance de modérée (?) à médiocre (?) pour la combinaison écran/sonde de l’utilisateur (cela peut convenir, ou être très mauvais, mais cela peut dans la plupart des cas corriger des problèmes tels que la sensibilité au rouge du ColorHug, et peut donc être acceptable en dernier recours)</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+                <li><del>Lors d’une tentative d’import de corrections de colorimètre ou d’activation du Spyder2, faire en sorte que le mode automatique télécharge le logiciel du fournisseur si nécessaire.</del> (implémenté dans la v2.1.1.2 Beta et versions ultérieures)</li>
+                <li>(À long terme) améliorer l’interface utilisateur.</li>
+                <li><del>Améliorer l’interface avec <a href="https://github.com/GNOME/gnome-color-manager">GNOME Color Manager</a></del> (implémenté dans la v0.8.1.0+)</li>
+                <li><del>Mesurer et rapporter l’homogénéité / l’uniformité de l’éclairage de l’écran</del></li>
+                <li><del>Supprimer le terminal et implémenter une véritable interface graphique pour la partie interactive de l’étalonnage</del> (implémenté dans la v0.8.5.6+)</li>
+                <li><del>Améliorer l’interface de vérification de profil : si un jeu de test contient plusieurs formats de valeurs (CMJN, RVB, XYZ, L*a*b*), permettre de sélectionner celui/ceux à utiliser dans une fenêtre « configuration »</del> (fenêtre « configuration » implémentée dans la v1.5.6.9+, sélection du format de valeurs ajoutée dans la v1.6.3.5)</li>
+                <li>Ajouter des pourcentages de couverture de gamut au rapport de vérification de profil si le jeu de test contient des valeurs de référence (pas *.ti1) : calculer des profils à la volée à partir du jeu de test et des mesures de vérification, puis créer des volumes de gamut à partir du profil du jeu de test, du profil évalué et du profil des mesures de vérification via l’outil Argyll <code>iccgamut</code>. Comparer les volumes de gamut avec l’outil Argyll <code>viewgam</code> et l’option <code>-i</code>, puis inclure les résultats dans le rapport (le calcul de couverture pour la référence du jeu de test et le profil à évaluer pourrait être fait avant les mesures, et aussi affiché dans la fenêtre « configuration » de vérification de profil encore à implémenter).</li>
+                <li><del>Finaliser la documentation dans le README</del></li>
+                <li>README en allemand (reporté)</li>
+                <li><del>Vérification de profil (envoyer XYZ ou L*a*b* au profil d’affichage, afficher
+                    les valeurs RVB correspondantes, mesurer, produire un Delta E)</del> (implémenté dans la v0.3.6+)</li>
+                <li><del>Commutateur « Avant » / « Après » une fois l’étalonnage / la caractérisation terminés</del> (implémenté dans la v0.2+)</li>
+                <li><del>Stocker tous les paramètres dans le profil et permettre le chargement des paramètres depuis le profil en
+                    plus du fichier <code>.cal</code></del> (implémenté dans la v0.2+)</li>
+                <li><del>Documenter le code</del> (la documentation du code peut encore être améliorée, mais elle est suffisante pour l’instant)</li>
+                <li><del>Nettoyage du code</del> (en grande partie fait)</li>
+            </ul>
         </div>
 
         <div id="thanks">

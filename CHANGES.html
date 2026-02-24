@@ -43,9 +43,49 @@
     <div id="changelog">
         <h2>Changelog</h2>
         <dl>
-            <dt id="changelog-3.9.x">2022-04-01 12:00 (UTC) 3.9.x </dt>
+            <dt id="changelog-3.9.x">2026-02-24 00:00 (UTC) 3.9.x </dt>
             <dd>
                 <h3>DisplayCAL 3.9.x</h3>
+
+                <h4>Changed in this release:</h4>
+                <ul>
+                    <li>
+                        <span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span>
+                        Continued 3.9.x development through multiple releases up to 3.9.17.
+                    </li>
+                    <li>
+                        <span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span>
+                        Modernized packaging/build tooling by migrating project metadata to <code>pyproject.toml</code>, improving wheel/sdist handling and CI workflows, and updating build automation.
+                    </li>
+                    <li>
+                        <span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span>
+                        Improved Python compatibility for newer runtimes (3.11, 3.12 and 3.13) and removed legacy compatibility layers.
+                    </li>
+                    <li>
+                        <span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span>
+                        Reworked display detection internals by replacing the old <code>RealDisplaySizeMM</code> C-extension path with maintained Python implementations and updated EDID parsing.
+                    </li>
+                    <li>
+                        <span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span>
+                        Add support for Datacolor SpyderX2 / SpyderPRO 2024 devices and refresh instrument compatibility notes for recent ArgyllCMS releases.
+                    </li>
+                    <li>
+                        <span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span>
+                        Add support for ArgyllCMS observer naming updates (CIE 2015 2° / CIE 2012 10° aliases) and improve ArgyllCMS version/update handling.
+                    </li>
+                    <li>
+                        <span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span>
+                        Improve ArgyllCMS download archive selection by centralizing platform and architecture suffix detection.
+                    </li>
+                    <li>
+                        <span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span>
+                        Add ArgyllCMS archive suffix handling for Windows ARM64, macOS ARM64 and legacy macOS i386 targets.
+                    </li>
+                    <li>
+                        <span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span>
+                        Improved profile information and correction workflows, including gamut coverage display and multiple colorimeter correction/untethered measurement refinements.
+                    </li>
+                </ul>
 
                 <h4>Fixed in this release:</h4>
                 <ul>
@@ -60,6 +100,38 @@
                     <li>
                         <span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span>
                         Dropped 32bit support. DisplayCAL is now working only in 64bit OSes.
+                    </li>
+                    <li>
+                        <span class="changelog-label moderate"><span>[</span>Moderate<span>]</span></span>
+                        Fixed multiple Windows startup and runtime problems, including path quoting, subprocess/environment handling and profile loader stability.
+                    </li>
+                    <li>
+                        <span class="changelog-label moderate"><span>[</span>Moderate<span>]</span></span>
+                        Resolved several bytes/str and encoding regressions affecting Argyll command execution, wexpect I/O, ICC parsing and 3D LUT workflows.
+                    </li>
+                    <li>
+                        <span class="changelog-label minor"><span>[</span>Minor<span>]</span></span>
+                        Fixed ArgyllCMS installer/download edge cases (including driver extraction and latest-version tests) across platforms.
+                    </li>
+                    <li>
+                        <span class="changelog-label minor"><span>[</span>Minor<span>]</span></span>
+                        Corrected EDID parsing/display enumeration issues, including Wayland and large EDID data handling.
+                    </li>
+                    <li>
+                        <span class="changelog-label minor"><span>[</span>Minor<span>]</span></span>
+                        Fixed profile creation/loading and verification edge cases, including matrix/3D LUT and madVR-related regressions.
+                    </li>
+                    <li>
+                        <span class="changelog-label minor"><span>[</span>Minor<span>]</span></span>
+                        Update ArgyllCMS integration tests for platform-aware archive URLs and latest upstream release 3.5.0.
+                    </li>
+                    <li>
+                        <span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span>
+                        Refresh bundled documentation with ArgyllCMS 3.5.0 reference file notes and expanded instrument support list.
+                    </li>
+                    <li>
+                        <span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span>
+                        Synchronize README content updates, including French TOC/section anchors and additional advanced patch sequencing documentation.
                     </li>
                 </ul>
 

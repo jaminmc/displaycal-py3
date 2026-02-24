@@ -3,6 +3,7 @@
 import glob
 import os
 import pathlib
+import platform
 import shutil
 import subprocess
 import sys
@@ -21,6 +22,7 @@ from DisplayCAL.worker import Worker
 import DisplayCAL
 from DisplayCAL import RealDisplaySizeMM
 from DisplayCAL.argyll import (
+    get_argyll_download_suffix,
     get_argyll_latest_version,
     get_argyll_version_string,
     parse_argyll_version_string,
@@ -117,13 +119,12 @@ def setup_argyll():
     get_argyll_latest_version.cache_clear()
     argyll_version = get_argyll_latest_version()
     argyll_domain = config.defaults.get("argyll.domain", "")
-    argyll_download_url = {
-        "win32": f"{argyll_domain}/Argyll_V{argyll_version}_win64_exe.zip",
-        "darwin": f"{argyll_domain}/Argyll_V{argyll_version}_osx10.6_x86_64_bin.tgz",
-        "linux": f"{argyll_domain}/Argyll_V{argyll_version}_linux_x86_64_bin.tgz",
-    }
-
-    url = argyll_download_url[sys.platform]
+    argyll_suffix = get_argyll_download_suffix(
+        platform_name=sys.platform,
+        machine=platform.machine(),
+        architecture_bits=platform.architecture()[0],
+    )
+    url = f"{argyll_domain}/Argyll_V{argyll_version}{argyll_suffix}"
 
     argyll_temp_path = tempfile.mkdtemp()
     # store current working directory
