@@ -6,7 +6,8 @@ distro>=1.9.0
 numpy>=1.26,<3
 Pillow>=10.4.0
 protobuf>=5.28,<6
-PyChromecast>=14.0.5
+PyChromecast>=13,<14; python_version < "3.11"
+PyChromecast>=14.0.5,<15; python_version >= "3.11"
 pywin32; sys_platform == "win32"
 Send2Trash>=1.8.3
 WMI; sys_platform == "win32"
