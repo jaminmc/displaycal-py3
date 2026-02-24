@@ -13,7 +13,7 @@ Prerequisites
 -------------
 
 In Linux, you can install DisplayCAL into an virtual environment through PyPI or build
-it from source. Currently we support Python 3.8 to Python 3.13.
+it from source. Currently we support Python 3.9 to Python 3.14.
 
 To install DisplayCAL there are some prerequisites:
 
@@ -64,7 +64,7 @@ If you close the current terminal and run a new one, you need to activate the vi
 environment before calling `displaycal`:
 
 ```shell
-source ~/venv-diplaycal/bin/activate
+source ~/venv-displaycal/bin/activate
 displaycal
 ```
 
@@ -120,9 +120,10 @@ virtual environment manually. Ensure the python binary you're using is supported
 ```shell
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt -r requirements-dev.txt
+pip install uv
+uv pip install -r requirements-tests.txt -r requirements-dev.txt
 python -m build
-pip install dist/DisplayCAL-3.9.*.whl
+uv pip install dist/*.whl --force-reinstall
 ```
 
 This should install DisplayCAL. To run the UI:

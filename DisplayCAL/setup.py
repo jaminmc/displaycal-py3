@@ -452,7 +452,12 @@ def setup():
     sdist = "sdist" in sys.argv[1:]
     setuptools = None
     skip_postinstall = "--skip-postinstall" in sys.argv[1:]
-    use_distutils = not bdist_bbfreeze and not do_py2app
+    # On Python 3.14+, setuptools + pyproject metadata can conflict with
+    # py2app's legacy command expectations, so prefer distutils-compatible
+    # setup flow for py2app there.
+    use_distutils = not bdist_bbfreeze and (
+        not do_py2app or sys.version_info >= (3, 14)
+    )
     use_setuptools = (
         not use_distutils
         or "--use-setuptools" in sys.argv[1:]
@@ -939,6 +944,7 @@ def setup():
             "Programming Language :: Python :: 3.11",
             "Programming Language :: Python :: 3.12",
             "Programming Language :: Python :: 3.13",
+            "Programming Language :: Python :: 3.14",
             "Topic :: Multimedia :: Graphics",
         ],
         "data_files": data_files,
@@ -987,8 +993,9 @@ def setup():
         attrs["include_package_data"] = (
             sys.platform in ("darwin", "win32") and not do_py2app
         )
-        install_requires = [req.replace("(", "").replace(")", "") for req in requires]
-        attrs["install_requires"] = install_requires
+        if not do_py2app:
+            install_requires = [req.replace("(", "").replace(")", "") for req in requires]
+            attrs["install_requires"] = install_requires
         attrs["zip_safe"] = False
     else:
         attrs["scripts"].extend(
@@ -1000,9 +1007,6 @@ def setup():
                 or sys.platform != "darwin"
             ]
         )
-
-    if bdist_bbfreeze:
-        attrs["setup_requires"] = ["bbfreeze"]
 
     if "bdist_wininst" in sys.argv[1:]:
         attrs["scripts"].append(os.path.join("util", f"{name}_postinstall.py"))
@@ -1022,13 +1026,23 @@ def setup():
         from py2app.build_app import py2app as py2app_cls
 
         py2app_cls._copy_package_data = py2app_cls.copy_package_data
+        attrs.setdefault("cmdclass", {})["py2app"] = py2app_cls
+        py2app_cls._finalize_options = py2app_cls.finalize_options
 
         def copy_package_data(self, package, target_dir):
             # Skip package data which is already included as data files
             if package.identifier.split(".")[0] != name:
                 self._copy_package_data(package, target_dir)
 
+        def finalize_options(self):
+            # py2app's legacy command rejects install_requires, but project
+            # dependencies are declared in pyproject.toml and loaded eagerly.
+            if hasattr(self.distribution, "install_requires"):
+                self.distribution.install_requires = []
+            return self._finalize_options()
+
         py2app_cls.copy_package_data = copy_package_data
+        py2app_cls.finalize_options = finalize_options
         attrs["options"] = {
             "py2app": {
                 "argv_emulation": False,
@@ -1041,7 +1055,6 @@ def setup():
         }
         if use_sdl:
             attrs["options"]["py2app"]["frameworks"] = ["SDL2", "SDL2_mixer"]
-        attrs["setup_requires"] = ["py2app"]
 
     if do_py2exe:
         import wx
@@ -1228,8 +1241,6 @@ def setup():
             attrs["options"]["py2exe"].update(
                 {"bundle_files": 3, "compressed": 0, "optimize": 0, "skip_archive": 1}
             )
-        if setuptools:
-            attrs["setup_requires"] = ["py2exe"]
         attrs["zipfile"] = os.path.join("lib", "library.zip")
 
     if (do_uninstall or do_install or bdist_win or bdist_dumb) and not help:

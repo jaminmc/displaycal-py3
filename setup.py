@@ -10,7 +10,7 @@ import subprocess
 import sys
 import time
 from configparser import RawConfigParser
-from distutils.util import get_platform
+from setuptools._distutils.util import get_platform
 from hashlib import md5, sha1
 from pathlib import Path
 from textwrap import fill

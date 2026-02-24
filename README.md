@@ -30,4 +30,36 @@ Follow the instructions depending on your OS:
 - [MacOS](docs/install_instructions_macos.md)
 - [Linux](docs/install_instructions_linux.md)
 
+Development (Modern Workflow)
+=============================
+
+For day-to-day development and testing, use the `pyproject.toml` + wheel workflow:
+
+```shell
+python3 -m venv .venv
+source .venv/bin/activate
+pip install uv
+uv pip install -r requirements-tests.txt -r requirements-dev.txt
+python -m build
+uv pip install dist/*.whl --force-reinstall
+pytest -n auto -W ignore --color=yes
+```
+
+Supported Python versions for this project are 3.9 through 3.14. CI currently validates:
+- Linux: Python 3.9-3.14
+- Windows: Python 3.9-3.11
+
+Default CI and `make tests` runs are deterministic and skip network-marked tests.
+To enable network-backed tests locally, set `DISPLAYCAL_ALLOW_NETWORK_TESTS=1`.
+
+The `Makefile` targets (`make venv build install`, `make tests`, `make launch`) are
+supported convenience wrappers around this workflow.
+
+Legacy Packaging Paths
+======================
+
+Legacy `setup.py`-driven release tasks (for example `py2app` and other platform
+specific packaging helpers) are still kept for release engineering needs. Prefer the
+modern wheel workflow above for normal development, CI, and bug fixing.
+
 Have fun!

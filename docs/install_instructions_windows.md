@@ -11,21 +11,18 @@ test the latest code).
 Install through PyPI
 --------------------
 
-If you desire so, you can install DisplayCAL through PyPI. You need to use Python 3.9,
-3.10 or 3.11 and use the system Python, so no Virtual Environments. We recommend using
-Python 3.11. Here is the installation procedure:
+If you desire so, you can install DisplayCAL through PyPI. The project supports Python
+3.9 through 3.14. For Windows development and best compatibility, we currently recommend
+Python 3.11 and using the system Python installation (not a virtual environment). Here is
+the installation procedure:
 
-1- Download and install one of Python 3.9, 3.10 or 3.11. Unfortunatelly Python 3.12 is
-   not currently working:
+1- Download and install Python 3.11 (recommended):
 
    Here is some download links that are now hidden in Python's home page:
-   - [python-3.9.13-amd64.exe](https://www.python.org/ftp/python/3.9.13/python-3.9.13-amd64.exe)
-   - [python-3.10.11-amd64.exe](https://www.python.org/ftp/python/3.10.11/python-3.10.11-amd64.exe)
-   - Python 3.11 can be downloaded directly from [Python.org](https://www.python.org/downloads/windows/).
-   - Python 3.12 is not supported currently.
-
-   Some of the libraries that DisplayCAL depends on are not working or not supported
-   with Python 3.12. So, stick with Python 3.9, 3.10 or 3.11 until we find a solution.
+   - Python 3.11 can be downloaded from [Python.org](https://www.python.org/downloads/windows/).
+   - Python 3.9 and 3.10 are also supported.
+   - Python 3.12, 3.13 and 3.14 are supported by project metadata, but Windows CI currently
+     validates 3.9-3.11.
 
    Also don't forget to select "Add Python 3.xx to PATH" in the installer.
 
@@ -68,21 +65,17 @@ Build From Source
 -----------------
 
 Under Windows the `makefile` workflow will not work, using a virtual environment is also
-breaking Wexpect module, so you need to use your system Python installation. Currently,
-DisplayCAL will run with Python 3.9, 3.10 and 3.11, but Python 3.12 is not supported. To
-build DisplayCAL from source under Windows follow these steps:
+breaking Wexpect module, so you need to use your system Python installation. DisplayCAL
+supports Python 3.9 through 3.14, but Windows CI currently validates 3.9-3.11. To build
+DisplayCAL from source under Windows follow these steps:
 
-1- Download and install one of Python 3.9, 3.10 or 3.11. Unfortunatelly Python 3.12 is
-   not currently working:
+1- Download and install Python 3.11 (recommended):
 
    Here is some download links that are now hidden in Python's home page:
-   - [python-3.9.13-amd64.exe](https://www.python.org/ftp/python/3.9.13/python-3.9.13-amd64.exe)
-   - [python-3.10.11-amd64.exe](https://www.python.org/ftp/python/3.10.11/python-3.10.11-amd64.exe)
-   - Python 3.11 can be downloaded directly from [Python.org](https://www.python.org/downloads/windows/).
-   - Python 3.12 is not supported currently.
-
-   Some of the libraries that DisplayCAL depends on are not working or supported with
-   Python 3.12. So, stick with Python 3.9, 3.10 or 3.11 until we find a solution.
+   - Python 3.11 can be downloaded from [Python.org](https://www.python.org/downloads/windows/).
+   - Python 3.9 and 3.10 are also supported.
+   - Python 3.12, 3.13 and 3.14 are supported by project metadata, but Windows CI currently
+     validates 3.9-3.11.
 
    Also don't forget to select "Add Python 3.xx to PATH" in the installer.
 
@@ -129,9 +122,9 @@ build DisplayCAL from source under Windows follow these steps:
    Let's install the requirements, build displaycal and install it:
 
    ```shell
-   pip install -r requirements.txt -r requirements-dev.txt
+   pip install -r requirements-tests.txt -r requirements-dev.txt
    python -m build
-   pip install dist/DisplayCAL-3.9.*.whl
+   pip install dist/*.whl
    ```
 
 5- Run DisplayCAL:
@@ -152,7 +145,7 @@ build DisplayCAL from source under Windows follow these steps:
 
    ```shell
    python -m build
-   pip install dist/DisplayCAL-3.9.*.whl
+   pip install dist/*.whl
    ```
 
 Build The Installer

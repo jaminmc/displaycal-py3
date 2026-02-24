@@ -4168,7 +4168,11 @@ END_DATA
                 profile_src.write()
 
                 # Create link from source to destination profile
-                gam_link_filename = tempfile.mktemp(profile_ext, "gam-link-", dir=cwd)
+                fd, gam_link_filename = tempfile.mkstemp(
+                    suffix=profile_ext, prefix="gam-link-", dir=cwd
+                )
+                os.close(fd)
+                os.remove(gam_link_filename)
                 result = self.exec_cmd(
                     collink,
                     [
@@ -4208,7 +4212,11 @@ END_DATA
 
                 # Convert RGB image from source to destination to get source
                 # encoded within destination.
-                gam_out_tiff = tempfile.mktemp(".tif", "gam-out-", dir=cwd)
+                fd, gam_out_tiff = tempfile.mkstemp(
+                    suffix=".tif", prefix="gam-out-", dir=cwd
+                )
+                os.close(fd)
+                os.remove(gam_out_tiff)
                 result = self.exec_cmd(
                     tools["cctiff"],
                     ["-p", gam_link_filename, gam_in_tiff, gam_out_tiff],
@@ -10974,7 +10982,11 @@ usage: spotread [-options] [logfile]
                                         # devicelink
                                         collink_args.remove("-ni")
                                         break
-                        link_profile = tempfile.mktemp(profile_ext, dir=self.tempdir)
+                        fd, link_profile = tempfile.mkstemp(
+                            suffix=profile_ext, prefix="link-", dir=self.tempdir
+                        )
+                        os.close(fd)
+                        os.remove(link_profile)
                         result = self.exec_cmd(
                             collink,
                             collink_args
@@ -16594,7 +16606,10 @@ BEGIN_DATA
                 ):
                     return Error(lang.getstr("file.invalid") + "\n" + filename)
             if cls is not zipfile.ZipFile:
-                z.extractall(outdir)
+                try:
+                    z.extractall(outdir, filter="data")
+                except TypeError:
+                    z.extractall(outdir)
             else:
                 for name in names:
                     # If the ZIP file was created with Unicode names stored

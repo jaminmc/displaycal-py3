@@ -2,8 +2,11 @@
 """Tests for the DisplayCAL.icc_profile module."""
 import binascii
 import datetime
+import pathlib
 import sys
 from time import strftime
+
+import pytest
 
 from DisplayCAL import colormath
 from DisplayCAL.icc_profile import (
@@ -853,6 +856,7 @@ def test_dict_type_to_json():
     assert d.to_json() == expected_result
 
 
+@pytest.mark.network
 def test_issue_185_parsing_of_ref_srgb_profile_from_argyllcms(setup_argyll):
     """Testing for issue #185, opening sRGB.icm from ArgyllCMS raises TypeError."""
     xicclu_path = which("xicclu")
@@ -863,6 +867,9 @@ def test_issue_185_parsing_of_ref_srgb_profile_from_argyllcms(setup_argyll):
     else:
         argyll = setup_argyll
         srgb_profile_path = argyll / ".." / "ref" / "sRGB.icm"
+    srgb_profile_path = pathlib.Path(srgb_profile_path)
+    if not srgb_profile_path.is_file():
+        pytest.skip(f"Missing Argyll reference profile: {srgb_profile_path}")
     icc_profile = ICCProfile(srgb_profile_path)
     # the following should not raise an error
     _ = icc_profile.get_info()

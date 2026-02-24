@@ -19,7 +19,7 @@ Install through PyPI or Build From Source
 -----------------------------------------
 
 In macOS, you can install DisplayCAL into an virtual environment through PyPI or build
-it from source. Currently we support Python 3.9 to Python 3.13.
+it from source. Currently we support Python 3.9 to Python 3.14.
 
 Prerequisites
 -------------
@@ -27,7 +27,7 @@ Prerequisites
 Install the dependencies through `brew`:
 
 ```shell
-brew install glib gtk+3 python@3.13
+brew install glib gtk+3 python@3.14
 ```
 
 > [!NOTE]
@@ -59,14 +59,15 @@ If you close the current terminal and run a new one, you need to activate the vi
 environment before calling `displaycal`:
 
 ```shell
-source ~/venv-diplaycal/bin/activate
+source ~/venv-displaycal/bin/activate
 displaycal
 ```
 
 Build From Source (Makefile Workflow)
 -------------------------------------
 
-To test the latest code you can build DisplayCAL from its source. To do that:
+To test the latest code you can build DisplayCAL from its source. This is the
+recommended development path and matches the CI build strategy. To do that:
 
 Pull the source:
 
@@ -122,9 +123,10 @@ virtual environment manually. Ensure the python binary you're using is supported
 ```shell
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt -r requirements-dev.txt
+pip install uv
+uv pip install -r requirements-tests.txt -r requirements-dev.txt
 python3 -m build
-pip install dist/DisplayCAL-3.9.*.whl
+uv pip install dist/*.whl --force-reinstall
 ```
 
 This should install DisplayCAL. To run the UI:
@@ -137,11 +139,13 @@ Building `DisplayCAL.app`
 -------------------------
 
 You can build a proper macOS app to make it easier to run the application.
+This is a legacy release packaging path (`setup.py py2app`) and not required for normal
+development or testing.
 
 Firstly install the requirements if you didn't already done it before:
 
 ```shell
-brew install glib gtk+3 python@3.13
+brew install glib gtk+3 python@3.14
 ```
 
 Clone the source of DisplayCAL, build and install it:
@@ -160,7 +164,7 @@ Now you can generate the app:
 python3 setup.py py2app
 ```
 
-That should generate a folder with the name `py2app.macosx-14.0-arm64-py3.13` under the
+That should generate a folder with the name `py2app.macosx-*-arm64-py3.14` under the
 `dist` folder which should contain another folder with the name `DisplayCAL-3.9.16`
 which should contain the `DisplayCAL.app` package.
 
@@ -176,13 +180,13 @@ First put a link to the `Applications` folder for people to easily drag & drop t
 in to their system `Applications` folder:
 
 ```shell
-cd ~/displaycal-py3/dist/py2app.macosx-14.0-arm64-py3.13/DisplayCAL-3.9.16
+cd ~/displaycal-py3/dist/py2app.macosx-*-arm64-py3.14/DisplayCAL-3.9.16
 ln -s /Applications
 ```
 
 Use `Disk Utility.app` to generate a `dmg` file, by using the
 `File -> New Image -> Image From Folder...` menu and selecting the
-`~/displaycal-py3/dist/py2app.macosx-14.0-arm64-py3.13/DisplayCAL-3.9.16` folder.
+`~/displaycal-py3/dist/py2app.macosx-*-arm64-py3.14/DisplayCAL-3.9.16` folder.
 
 Now you can rename the `dmg` file to `DisplayCAL-3.9.16-macOS-arm64.dmg` or
 `DisplayCAL-3.9.16-macOS-x86.dmg` depending on your macOS architecture.

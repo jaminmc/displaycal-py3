@@ -4,6 +4,7 @@ from __future__ import annotations
 import io
 import pathlib
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -112,7 +113,7 @@ def test_worker_instrument_supports_css_1():
     assert result == expected_result
 
 
-# @pytest.mark.skip(reason="Test segfaults with python 3.12 - further investigation required.")
+@pytest.mark.network
 def test_generate_b2a_from_inverse_table(data_files, setup_argyll):
     """Test Worker.generate_B2A_from_inverse_table() method"""
     worker = Worker()
@@ -132,6 +133,7 @@ def test_sudo_class_initialization():
     assert sudo is not None
 
 
+@pytest.mark.network
 def test_download_method_1():
     """Test Worker.download() method."""
     worker = Worker()
@@ -140,6 +142,7 @@ def test_download_method_1():
     assert result is not None
 
 
+@pytest.mark.network
 def test_download_method_2():
     """Test Worker.download() method."""
     worker = Worker()
@@ -148,6 +151,7 @@ def test_download_method_2():
     assert result is not None
 
 
+@pytest.mark.network
 def test_download_method_3():
     """Test Worker.download() method."""
     worker = Worker()
@@ -156,6 +160,7 @@ def test_download_method_3():
     assert result is not None
 
 
+@pytest.mark.network
 def test_download_method_4():
     """Test Worker.download() method."""
     worker = Worker()
@@ -227,6 +232,7 @@ def test_is_allowed_1():
     assert result != ""
 
 
+@pytest.mark.network
 def test_ti3_lookup_to_ti1_1(data_files, setup_argyll):
     """Test Worker.ti3_lookup_to_ti1() function for #129"""
     ti3_path = data_files["0_16_from_issue_129.ti3"].absolute()
@@ -523,6 +529,7 @@ def test_prepare_dispcal_1():
     os.getenv("GITHUB_ACTIONS") == "true",
     reason="Not working properly on GitHub.",
 )
+@pytest.mark.network
 def test_get_argyll_version_string_returns_a_proper_value():
     """get_argyll_version_string() returns a proper value."""
     import wx
@@ -533,16 +540,18 @@ def test_get_argyll_version_string_returns_a_proper_value():
     assert "0.0.0" != get_argyll_version_string(name="ccxxmake", silent=False)
 
 
+@pytest.mark.network
 def test_get_argyll_latest_version_returns_str():
     """get_argyll_latest_version() returns a str."""
     result = get_argyll_latest_version()
     assert isinstance(result, str)
 
 
+@pytest.mark.network
 def test_get_argyll_latest_version_returns_latest_argyll_cms_version():
-    """get_argyll_latest_version() returns the latest argyll cms version."""
+    """get_argyll_latest_version() returns a version-like string."""
     result = get_argyll_latest_version()
-    assert result == "3.5.0"
+    assert re.fullmatch(r"\d+\.\d+(\.\d+)?", result)
 
 
 def test_get_argyll_latest_version_returns_the_default_version_if_no_internet_connect(
@@ -568,6 +577,7 @@ def test_get_argyll_latest_version_returns_the_default_version_if_no_internet_co
     os.getenv("GITHUB_ACTIONS") == "true" and sys.platform == "linux",
     reason="Not working properly on GitHub on Linux machines.",
 )
+@pytest.mark.network
 def test_get_technology_strings_returns_dict(setup_argyll):
     """Test get_technology_strings() returns a dict."""
     worker = Worker()
@@ -619,6 +629,7 @@ def test_get_technology_strings_without_argyll_returns_from_argyll_17():
     os.getenv("GITHUB_ACTIONS") == "true" and sys.platform == "linux",
     reason="Not working properly on GitHub on Linux machines.",
 )
+@pytest.mark.network
 def test_get_technology_strings_with_argyll_returns_expected_data(setup_argyll):
     """Test get_technology_strings() returns a dict with correct data."""
     get_argyll_latest_version.cache_clear()

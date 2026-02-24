@@ -1,14 +1,14 @@
-build  # conda python-build
-certifi
+build>=1.2,<2  # conda python-build
+certifi>=2024.8.30
 comtypes; sys_platform == "win32"
 dbus-python; sys_platform == "linux"
-distro
-numpy
-Pillow
-protobuf
-PyChromecast
+distro>=1.9.0
+numpy>=1.26,<3
+Pillow>=10.4.0
+protobuf>=5.28,<6
+PyChromecast>=14.0.5
 pywin32; sys_platform == "win32"
-Send2Trash
+Send2Trash>=1.8.3
 WMI; sys_platform == "win32"
-wxPython >= 4.2.2
-zeroconf
+wxPython>=4.2.2,<4.3
+zeroconf>=0.136.2

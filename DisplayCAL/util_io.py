@@ -301,7 +301,7 @@ class TarFileProper(tarfile.TarFile):
             else:
                 self._dbg(1, "tarfile: %s" % e)
 
-    def extractall(self, path=".", members=None, full=True):
+    def extractall(self, path=".", members=None, full=True, filter=None):
         """Extract all members from the archive to the current working
         directory and set owner, modification time and permissions on
         directories afterwards. `path' specifies a different directory

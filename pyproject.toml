@@ -1,7 +1,7 @@
 [build-system]
 build-backend = "setuptools.build_meta"
 requires = [
-    "setuptools",
+    "setuptools>=68",
     'pywin32; platform_system=="Windows"',
 ]
 
@@ -23,6 +23,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Multimedia :: Graphics",
 ]
 description = "Display calibration and profiling with a focus on accuracy and versatility"
@@ -110,7 +111,8 @@ DisplayCAL = [
 
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.txt"] }
-optional-dependencies.test = { file = ["requirements-dev.txt"] }
+optional-dependencies.test = { file = ["requirements-tests.txt"] }
+optional-dependencies.dev = { file = ["requirements-dev.txt"] }
 version = { file = ["VERSION"] }
 
 [tool.black]
@@ -155,19 +157,22 @@ per-file-ignores = [
 pythonpath = [
     ".",
 ]
+markers = [
+    "network: tests that require external network access or remote resources",
+]
 
 [tool.tox]
 requires = ["tox>=4.23.2"]
-env_list = ["3.9", "3.10", "3.11", "3.12", "3.13"]
+env_list = ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
 
 [tool.tox.env_run_base]
 description = "run the tests with pytest"
 package = "wheel"
 wheel_build_env = ".pkg"
 deps = [
-    "pytest>=6",
-    "pytest-cov",
-    "pytest-xdist",
+    "pytest>=8.3.4,<10",
+    "pytest-cov>=6,<7",
+    "pytest-xdist>=3.6.1,<4",
 ]
 commands = [
     ["pytest"],

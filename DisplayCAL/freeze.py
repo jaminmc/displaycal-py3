@@ -7,7 +7,7 @@ import shutil
 import os
 import platform
 from setuptools import Extension, setup
-from distutils.util import change_root, get_platform
+from setuptools._distutils.util import change_root, get_platform
 from fnmatch import fnmatch
 from configparser import ConfigParser
 import ctypes.util
@@ -39,9 +39,9 @@ def findall(dir=os.curdir):
     return list(files)
 
 
-import distutils.filelist
+import setuptools._distutils.filelist as distutils_filelist
 
-distutils.filelist.findall = findall  # Fix findall bug in distutils
+distutils_filelist.findall = findall  # Fix findall bug in distutils
 
 
 bits = platform.architecture()[0][:2]
@@ -182,7 +182,7 @@ def add_lib_excludes(key, excludebits):
         config["excludes"][key].extend([f"{name}.lib{exclude}", f"lib{exclude}"])
 
     for exclude in ("32", "64"):
-        for pycompat in ("38", "39", "310", "311", "312", "313"):
+        for pycompat in ("39", "310", "311", "312", "313", "314"):
             if key == "win32" and (
                 pycompat == str(sys.version_info[0]) + str(sys.version_info[1])
                 or exclude == excludebits[0]
@@ -463,6 +463,7 @@ def build_py2exe():
             "Programming Language :: Python :: 3.11",
             "Programming Language :: Python :: 3.12",
             "Programming Language :: Python :: 3.13",
+            "Programming Language :: Python :: 3.14",
             "Topic :: Multimedia :: Graphics",
         ],
         "data_files": data_files,
@@ -705,8 +706,6 @@ def build_py2exe():
         attrs["options"]["py2exe"].update(
             {"bundle_files": 3, "compressed": 0, "optimize": 0, "skip_archive": 1}
         )
-    if setuptools:
-        attrs["setup_requires"] = ["py2exe"]
     attrs["zipfile"] = os.path.join("lib", "library.zip")
 
     # To have a working sdist and bdist_rpm when using distutils,

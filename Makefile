@@ -1,6 +1,4 @@
 SHELL:=bash
-NUM_CPUS = $(shell nproc ||  grep -c '^processor' /proc/cpuinfo)
-SETUP_PY_FLAGS = --use-distutils
 VERSION := $(shell cat VERSION_BASE)
 VERSION_FILE=$(CURDIR)/VERSION_BASE
 VIRTUALENV_DIR:=.venv
@@ -25,7 +23,7 @@ build:
 	source ./$(VIRTUALENV_DIR)/bin/activate; \
 	echo -e "\n\033[36m--- $@: Using python interpretter '`which python`' ---\033[0m\n"; \
 	pip install uv; \
-	uv pip install -r requirements.txt -r requirements-dev.txt; \
+	uv pip install -r requirements-tests.txt -r requirements-dev.txt; \
 	uv build;
 
 install:
@@ -89,7 +87,7 @@ tests:
 	echo -e "\n\033[36m--- $@: Using virtualenv at '$(VIRTUALENV_DIR)' ---\033[0m\n";
 	source ./$(VIRTUALENV_DIR)/bin/activate; \
 	echo -e "\n\033[36m--- $@: Using python interpretter '`which python`' ---\033[0m\n"; \
-	pytest -n auto -W ignore --color=yes --cov-report term;
+	pytest -n auto -W ignore --color=yes -m "not network" --cov=./DisplayCAL --cov-report term;
 
 # https://www.gnu.org/software/make/manual/html_node/Force-Targets.html
 FORCE:

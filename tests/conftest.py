@@ -115,6 +115,13 @@ def setup_argyll():
         return
 
     # apparently argyll has not been found
+    # keep default test runs deterministic unless explicitly enabled
+    if os.getenv("DISPLAYCAL_ALLOW_NETWORK_TESTS", "").lower() not in {"1", "true", "yes"}:
+        pytest.skip(
+            "ArgyllCMS is not available locally and network-backed setup is disabled. "
+            "Set DISPLAYCAL_ALLOW_NETWORK_TESTS=1 to enable download-based setup."
+        )
+
     # download from source
     get_argyll_latest_version.cache_clear()
     argyll_version = get_argyll_latest_version()
@@ -157,7 +164,7 @@ def setup_argyll():
             zip_ref.extractall()
     else:
         with tarfile.open(argyll_package_file_name) as tar:
-            tar.extractall()
+            tar.extractall(filter="data")
 
     def cleanup():
         # cleanup the test
@@ -191,7 +198,8 @@ def random_icc_profile():
     icc_profile = ICCProfile.from_rgb_space(
         rec709_gamma18, b"Rec. 709 gamma 1.8"
     )
-    icc_profile_path = tempfile.mktemp(suffix=".icc")
+    fd, icc_profile_path = tempfile.mkstemp(suffix=".icc")
+    os.close(fd)
     icc_profile.write(icc_profile_path)
 
     yield icc_profile, icc_profile_path
