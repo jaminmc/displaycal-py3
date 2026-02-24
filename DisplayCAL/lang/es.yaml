@@ -1188,8 +1188,8 @@
 "file.hash.verification.fail": |-
   Falló la verificación de suma de verificación para %s:
   
-  Expected %s
-  Actual %s
+  Esperado %s
+  Obtenido %s
 "file.invalid": |-
   Archivo no válido.
 "file.missing": |-
@@ -1990,7 +1990,7 @@
   Puede compartir su perfil con otros usuarios via el servicio OpenSUSE “ICC Profile Taxi”.
   
   Por favor proporcione una descripcion significativa e introduzca las propiedades de la pantalla mas abajo. Leer ajustes de la pantalla del menu OSD de la misma y aplicar solo las ajustes aplicables a la pantalla que se alteraron de las que trae por defecto.
-  Ejemplo: Para la mayor parte de las pantallas, estos son los nombres de los preajustes escogidos, brillo, contraste, color temperatura y/o ganancia del punto blanco RGB, asi como la gamma. En portatiles and ultraligeros, habitualmente solo el brillo. Si ha cambiado ajustes adicionales mientras calibraba su pantalla, introduzcalas si es posible.
+  Ejemplo: Para la mayor parte de las pantallas, estos son los nombres de los preajustes escogidos, brillo, contraste, color temperatura y/o ganancia del punto blanco RGB, asi como la gamma. En portatiles y ultraligeros, habitualmente solo el brillo. Si ha cambiado ajustes adicionales mientras calibraba su pantalla, introduzcalas si es posible.
 "profile.share.meta_missing": |-
   El perfil no contiene la meta informacion necesaria.
 "profile.share.success": |-
@@ -2066,14 +2066,14 @@
 "profile_loader.fix_profile_associations_warning": |-
   Mientras el cargador de perfiles esté en ejecución, puede encargarse de las asociaciones de perfiles cuando cambie la configuración de pantalla.
   
-  Before you proceed, please make sure the profile associations shown above are correct. If they aren't, follow these steps:
+  Antes de continuar, asegúrese de que las asociaciones de perfiles mostradas arriba sean correctas. Si no lo son, siga estos pasos:
   
-  1. Open Windows display settings.
-  2. Activate all connected displays (extended desktop).
-  3. Open profile associations.
-  4. Make sure each display device has the correct profile assigned. Then close profile associations.
-  5. In Windows display settings, revert to the previous display configuration and close display settings.
-  6. Now you can enable “Automatically fix profile associations”.
+  1. Abra la configuración de pantalla de Windows.
+  2. Active todas las pantallas conectadas (escritorio extendido).
+  3. Abra las asociaciones de perfiles.
+  4. Asegúrese de que cada dispositivo de pantalla tenga asignado el perfil correcto. Luego cierre las asociaciones de perfiles.
+  5. En la configuración de pantalla de Windows, vuelva a la configuración de pantalla anterior y cierre la configuración de pantalla.
+  6. Ahora puede activar “Corregir automáticamente las asociaciones de perfiles”.
 "profile_loader.info": |-
   El estado de calibración se (re)aplicó %i vez/veces hoy.
   Haga clic derecho en el icono para abrir el menú.
