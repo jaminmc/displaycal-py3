@@ -15,11 +15,6 @@ import threading
 from time import sleep
 from typing import TYPE_CHECKING, Any
 
-if sys.version_info >= (3, 11):
-    from typing import Self
-else:
-    from typing_extensions import Self
-
 # Python version check
 from DisplayCAL.meta import PY_MAXVERSION, PY_MINVERSION
 
@@ -54,12 +49,7 @@ from DisplayCAL.config import (
 )
 from DisplayCAL.debughelpers import ResourceError, handle_error
 from DisplayCAL.log import LOG
-from DisplayCAL.meta import (
-    BUILD,
-    VERSION,
-    VERSION_BASE,
-    VERSION_STRING,
-)
+from DisplayCAL.meta import VERSION_STRING
 from DisplayCAL.meta import (
     NAME as APPNAME,
 )
@@ -75,6 +65,10 @@ elif sys.platform == "darwin":
 if TYPE_CHECKING:
     from collections.abc import Iterator
     from types import TracebackType
+    if sys.version_info >= (3, 11):
+        from typing import Self
+    else:
+        from typing_extensions import Self
 
 
 def _excepthook(
@@ -147,9 +141,7 @@ def print_application_version() -> None:
     """Print application version."""
     if VERBOSE >= 1:
         version = VERSION_STRING
-        if VERSION > VERSION_BASE:
-            version += " Beta"
-        print(PYNAME + RUNTYPE, version, BUILD)
+        print(PYNAME + RUNTYPE, version, "")
 
 
 def print_os_version() -> None:

@@ -13,13 +13,13 @@ from typing import TYPE_CHECKING, Any, BinaryIO, TextIO
 
 from DisplayCAL.encoding import get_encoding
 
-if sys.version_info >= (3, 11):
-    from typing import Self
-else:
-    from typing_extensions import Self
-
 if TYPE_CHECKING:
     from collections.abc import Iterator
+
+    if sys.version_info >= (3, 11):
+        from typing import Self
+    else:
+        from typing_extensions import Self
 
 
 _codecs = {}
@@ -283,6 +283,7 @@ codec_register_alias("65001", "utf_8")
 codec_register_alias("cp65000", "utf_7")
 codec_register_alias("cp65001", "utf_8")
 codecs.register(lambda alias: _codecs.get(alias))
+
 
 if __name__ == "__main__":
     test = "test \u00e4\u00f6\u00fc\ufffe test"

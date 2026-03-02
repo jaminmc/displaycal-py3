@@ -22,6 +22,7 @@ import mimetypes
 import operator
 import os
 import platform
+import random
 import re
 import shutil
 import socket
@@ -185,7 +186,7 @@ from DisplayCAL.icc_profile import (
     set_display_profile,
 )
 from DisplayCAL.log import LOG, DummyLogger, LogFile, get_file_logger
-from DisplayCAL.meta import DOMAIN, VERSION, VERSION_BASE, VERSION_STRING
+from DisplayCAL.meta import DOMAIN, VERSION_STRING
 from DisplayCAL.meta import NAME as APPNAME
 from DisplayCAL.multiprocess import cpu_count, pool_slice
 from DisplayCAL.network import LoggingHTTPRedirectHandler, NoHTTPRedirectHandler
@@ -3499,10 +3500,16 @@ class Worker(WorkerBase):
             bool: True if video levels detection should be skipped, False if it
                 should not be skipped.
         """
+        display_name = config.get_display_name(None, True)
         return (
             self._detected_output_levels
             or not getcfg("patterngenerator.detect_video_levels")
-            or config.get_display_name() == "Untethered"
+            # Web @ localhost uses Argyll's built-in web server (-dweb:<port>).
+            # Video level detection would require a separate dispread session,
+            # which tears down/restarts that server before interactive adjust.
+            # Skip auto-detection here to keep a single continuous web session.
+            or display_name == "Web @ localhost"
+            or display_name == "Untethered"
             or is_ccxx_testchart()
         )
 
@@ -3514,6 +3521,14 @@ class Worker(WorkerBase):
                 detected,
         """
         if self.get_skip_video_levels_detection():
+            if config.get_display_name(None, True) == "Web @ localhost" and not getattr(
+                self, "_web_video_levels_skip_logged", False
+            ):
+                self.log(
+                    "Skipping output levels detection for Web @ localhost "
+                    "to keep a continuous web session."
+                )
+                self._web_video_levels_skip_logged = True
             return True
         self._detecting_video_levels = True
         try:
@@ -7581,6 +7596,13 @@ BEGIN_DATA
                         if finished:
                             with contextlib.suppress(OSError):
                                 self.patterngenerator.send((0,) * 3, x=0, y=0, w=1, h=1)
+                    elif isinstance(
+                        self.patterngenerator, WebWinHTTPPatternGeneratorServer
+                    ):
+                        # Keep WebWin server alive across setup/test and
+                        # interactive adjustment so connected browsers do not
+                        # need to reconnect between consecutive operations.
+                        pass
                     else:
                         self.patterngenerator.disconnect_client()
                 except Exception as exception:
@@ -11061,8 +11083,7 @@ BEGIN_DATA
         )
 
     def create_gamut_views(
-        self,
-        profile_path: str
+        self, profile_path: str
     ) -> tuple[None, None] | tuple[float, dict]:
         """Generate gamut views (VRML files).
 
@@ -17190,9 +17211,34 @@ BEGIN_DATA
         default_timeout = socket.getdefaulttimeout()
         socket.setdefaulttimeout(20)  # 20 seconds
         try:
-            return self._download(uri, force=force, download_dir=download_dir)
+            max_attempts = 3
+            retry_wait = 1.0
+            for attempt in range(1, max_attempts + 1):
+                result = self._download(uri, force=force, download_dir=download_dir)
+                if not isinstance(result, Exception):
+                    return result
+                if (
+                    self.thread_abort
+                    or attempt >= max_attempts
+                    or not self._is_retryable_download_error(result)
+                ):
+                    return result
+                wait_seconds = retry_wait + random.uniform(0, 0.25)
+                print(
+                    f"{result}\n"
+                    f"{lang.getstr('download.retrying', (attempt + 1, max_attempts, wait_seconds))}"
+                )
+                sleep(wait_seconds)
+                retry_wait *= 2
+                # Ensure next attempt refreshes server state and local file.
+                force = True
         finally:
             socket.setdefaulttimeout(default_timeout)
+
+    @staticmethod
+    def _is_retryable_download_error(error: Exception) -> bool:
+        """Return True for network/transient download errors."""
+        return bool(getattr(error, "retryable", False))
 
     def _download(self, uri, force=False, download_dir=None):
         """Download a file from the specified URI.
@@ -17225,7 +17271,6 @@ BEGIN_DATA
         Returns:
             str: The path to the downloaded file if successful.
             Exception: An Exception object if the download fails.
-
         """
         if TEST_BADSSL:
             uri = f"https://{TEST_BADSSL}.badssl.com/"
@@ -17237,6 +17282,14 @@ BEGIN_DATA
         download_path = os.path.join(download_dir, filename)
         response = None
         hashes = None
+        expectedhash_hex = None
+        actualhash = None
+
+        def make_download_error(message: str, retryable: bool = False) -> DownloadError:
+            error = DownloadError(message, orig_uri)
+            error.retryable = retryable
+            return error
+
         is_main_dl = uri.startswith(f"https://{DOMAIN}/download/")
         if is_main_dl:
             # Always force connection to server even if local file exists for
@@ -17305,21 +17358,26 @@ BEGIN_DATA
                 elif "SSLV3_ALERT_HANDSHAKE_FAILURE" in safe_str(exception):
                     print(lang.getstr("ssl.handshake_failure"))
                 elif "SSL:" not in safe_str(exception):
+                    exception.retryable = True
                     return exception
                 else:
                     print(exception)
                 if getattr(LoggingHTTPRedirectHandler, "newurl", uri) != uri:
                     uri = LoggingHTTPRedirectHandler.newurl
-                return DownloadError(
+                return make_download_error(
                     lang.getstr("download.fail")
                     + " "
                     + lang.getstr("connection.fail", uri),
-                    orig_uri,
+                    retryable=True,
                 )
             uri = response.geturl()
-            filename = Path(Path(uri).name)
+            filename = os.path.basename(Path(uri).name)
             actualhash = sha256()
-            if False:  # if hashes:  # skip this for now
+            # unfortunatelly, we don't have control over DisplayCAL.net
+            # where the hashes stored,
+            # until we setup something else (i.e a GitHub repository to store
+            # hashes) disable checking hashes
+            if False:  # if hashes:
                 # Read max. 64 KB hashes
                 hashesdata = hashes.read(1024 * 64)
                 hashes.close()
@@ -17328,29 +17386,35 @@ BEGIN_DATA
                     if not line.strip():
                         continue
                     name_hash = [value.strip() for value in line.split(None, 1)]
-                    if len(name_hash) != 2 or "" in name_hash:
+                    if len(name_hash) != 2 or b"" in name_hash:
                         response.close()
-                        return DownloadError(
-                            lang.getstr("file.hash.malformed", filename), orig_uri
+                        return make_download_error(
+                            lang.getstr("file.hash.malformed", filename),
+                            retryable=False,
                         )
-                    hashesdict[Path(name_hash[1].decode().lstrip("*"))] = name_hash[0]
-                    expectedhash_hex = hashesdict[filename]
+                    hash_filename = Path(
+                        name_hash[1].decode("utf-8", "replace").lstrip("*")
+                    )
+                    hashesdict[hash_filename.name] = (
+                        name_hash[0].decode("ascii", "replace").lower()
+                    )
+                expectedhash_hex = hashesdict.get(filename)
                 if not expectedhash_hex:
                     response.close()
-                    return DownloadError(
-                        lang.getstr("file.hash.missing", filename), orig_uri
+                    return make_download_error(
+                        lang.getstr("file.hash.missing", filename), retryable=False
                     )
             total_size = response.info().get("Content-Length")
             if total_size is not None:
                 try:
                     total_size = int(total_size)
                 except (TypeError, ValueError):
-                    return DownloadError(
+                    return make_download_error(
                         lang.getstr(
                             "download.fail.wrong_size",
                             ("<{}>".format(lang.getstr("unknown")),) * 2,
                         ),
-                        orig_uri,
+                        retryable=True,
                     )
                 else:
                     if not total_size:
@@ -17375,22 +17439,8 @@ BEGIN_DATA
                 os.makedirs(download_dir)
 
             # Acquire files safely so no-one but us can mess with them
-            fd = tmp_fd = tmp_download_path = None
-            try:
-                fd, download_path = mksfile(download_path)
-                tmp_fd, tmp_download_path = mksfile(download_path + ".download")
-            except OSError as mksfile_exception:
-                if response:
-                    response.close()
-                for fd_, _ in [(fd, download_path), (tmp_fd, tmp_download_path)]:
-                    if not fd_:
-                        continue
-                    os.close(fd_)
-                    try:
-                        os.remove(download_path)
-                    except OSError as exception:
-                        print(exception)
-                return mksfile_exception
+            download_path = mksfile(download_path)
+            tmp_download_path = mksfile(f"{download_path}.download")
             print(lang.getstr("downloading"), uri, "\u2192", download_path)
             self.recent.write(lang.getstr(f"downloading {filename}\n"))
             min_chunk_size = 1024 * 8
@@ -17414,10 +17464,10 @@ BEGIN_DATA
             fps = 20
             frametime = 1.0 / fps
 
-            download_file = None
             download_file_exception = None
+            download_succeeded = False
             try:
-                with os.fdopen(tmp_fd, "rb+") as tmp_download_file:
+                with open(tmp_download_path, "wb+") as tmp_download_file:
                     while True:
                         if self.thread_abort:
                             print(lang.getstr("aborted"))
@@ -17428,6 +17478,8 @@ BEGIN_DATA
                         bytes_read = len(chunk)
                         bytes_so_far += bytes_read
                         tmp_download_file.write(chunk)
+                        if expectedhash_hex:
+                            actualhash.update(chunk)
 
                         # Determine data rate
                         tdiff = time() - ts
@@ -17486,55 +17538,53 @@ BEGIN_DATA
                             chunk_size = int(bps / fps)
 
                     if not bytes_so_far:
-                        return DownloadError(
-                            lang.getstr("download.fail.empty_response", uri), orig_uri
+                        return make_download_error(
+                            lang.getstr("download.fail.empty_response", uri),
+                            retryable=True,
                         )
                     if total_size is not None and bytes_so_far != total_size:
-                        return DownloadError(
+                        return make_download_error(
                             lang.getstr(
                                 "download.fail.wrong_size", (total_size, bytes_so_far)
                             ),
-                            orig_uri,
+                            retryable=True,
                         )
                     if total_size is None or bytes_so_far == total_size:
-                        # Succesful download, write to destination
-                        tmp_download_file.seek(0)
-                        try:
-                            with os.fdopen(fd, "wb") as download_file:
-                                while True:
-                                    chunk = tmp_download_file.read(1024 * 1024)
-                                    if not chunk:
-                                        break
-                                    download_file.write(chunk)
-                                    if hashes:
-                                        actualhash.update(chunk)
-                        except OSError as download_file_exception:
-                            return download_file_exception
-                        print(lang.getstr("success"))
-            finally:
-                response.close()
-                if not download_file_exception:
-                    # Remove temporary download file unless there was an error
-                    # writing destination
+                        # Successful download, persist and atomically place file.
+                        download_succeeded = True
+                        tmp_download_file.flush()
+                        os.fsync(tmp_download_file.fileno())
+
+                if download_succeeded:
                     try:
-                        os.remove(tmp_download_path)
-                    except OSError as exception:
-                        print(exception)
-                if self.thread_abort or download_file_exception:
-                    # Remove destination file if download aborted or error
-                    # writing destination \
-                    if not download_file:
-                        # Need to close file descriptor first
-                        os.close(fd)
+                        os.replace(tmp_download_path, download_path)
+                    except OSError as e:
+                        return e
+                    print(lang.getstr("success"))
+            finally:
+                if response:
+                    response.close()
+                if (
+                    self.thread_abort
+                    or download_file_exception
+                    or not download_succeeded
+                ):
+                    # Remove destination file if download aborted, incomplete
+                    # or there was an error writing destination.
                     try:
                         os.remove(download_path)
+                    except OSError as exception:
+                        print(exception)
+                if not download_succeeded:
+                    try:
+                        os.remove(tmp_download_path)
                     except OSError as exception:
                         print(exception)
         else:
             # File already exists
             if response:
                 response.close()
-            if hashes:
+            if expectedhash_hex:
                 # Verify hash. Get hash of existing file
                 with open(download_path, "rb") as download_file:
                     while True:
@@ -17542,16 +17592,18 @@ BEGIN_DATA
                         if not chunk:
                             break
                         actualhash.update(chunk)
-        if False:  # if hashes:  # skip this for now
+        if expectedhash_hex:
             # Verify hash. Compare to expected hash
-            actualhash_hex = actualhash.hexdigest()
-            if actualhash_hex != expectedhash_hex.decode():
+            actualhash_hex = actualhash.hexdigest().lower()
+            if actualhash_hex != expectedhash_hex:
+                if os.path.isfile(download_path):
+                    os.remove(download_path)
                 return Error(
                     lang.getstr(
                         "file.hash.verification.fail",
                         (
                             download_path,
-                            f"SHA-256= {expectedhash_hex.decode()}",
+                            f"SHA-256= {expectedhash_hex}",
                             f"SHA-256= {actualhash_hex}",
                         ),
                     )
@@ -17581,7 +17633,17 @@ BEGIN_DATA
                 the application after processing. Defaults to False.
         """
         if isinstance(result, Exception):
-            show_result_dialog(result, self.owner)
+            if isinstance(result, DownloadError):
+                # DownloadError would otherwise force a "go to URL" prompt.
+                retry = show_result_dialog(
+                    Error(str(result)),
+                    self.owner,
+                    confirm=lang.getstr("retry"),
+                )
+                if retry:
+                    self._reopen_argyll_download_prompt()
+            else:
+                show_result_dialog(result, self.owner)
         elif result:
             if result.lower().endswith(".zip") or result.lower().endswith(".tgz"):
                 self.start(
@@ -17636,43 +17698,53 @@ BEGIN_DATA
             mode = "r:gz"
         else:
             return extracted
-        with cls(filename, mode) as z:
-            outdir = os.path.realpath(os.path.dirname(filename))
-            method = z.getnames if cls is not zipfile.ZipFile else z.namelist
-            try:
+        try:
+            with cls(filename, mode) as z:
+                outdir = os.path.realpath(os.path.dirname(filename))
+                method = z.getnames if cls is not zipfile.ZipFile else z.namelist
                 names = method()
-            except EOFError as e:
-                # probably didn't download properly,
-                # delete the file and let the user download again
-                print(f"Got EOFError, deleting the current downloaded file: {filename}")
+                names.sort()
+                extracted = [
+                    os.path.join(outdir, os.path.normpath(name)) for name in names
+                ]
+                if names:
+                    name0 = os.path.normpath(names[0])
+                for outpath in extracted:
+                    if not os.path.realpath(outpath).startswith(
+                        os.path.join(outdir, name0)
+                    ):
+                        return Error(lang.getstr("file.invalid") + "\n" + filename)
+                if cls is not zipfile.ZipFile:
+                    z.extractall(outdir)
+                else:
+                    for name in names:
+                        # If the ZIP file was created with Unicode names stored
+                        # in the file, 'name' will already be Unicode.
+                        # Otherwise, it'll either be 7-bit ASCII or (legacy)
+                        # cp437 encoding
+                        outname = name
+                        outpath = os.path.join(outdir, os.path.normpath(outname))
+                        if outname.endswith("/"):
+                            if not os.path.isdir(outpath):
+                                os.makedirs(outpath)
+                        elif not os.path.isfile(outpath):
+                            with open(outpath, "wb") as outfile:
+                                outfile.write(z.read(name))
+        except Exception:
+            # Corrupt/incomplete archive. Delete it so a retry gets a clean file.
+            if os.path.isfile(filename):
+                print(lang.getstr("archive.extract.fail.delete", filename))
                 os.remove(filename)
-                raise e
-            names.sort()
-            extracted = [os.path.join(outdir, os.path.normpath(name)) for name in names]
-            if names:
-                name0 = os.path.normpath(names[0])
-            for outpath in extracted:
-                if not os.path.realpath(outpath).startswith(
-                    os.path.join(outdir, name0)
-                ):
-                    return Error(lang.getstr("file.invalid") + "\n" + filename)
-            if cls is not zipfile.ZipFile:
-                z.extractall(outdir)
-            else:
-                for name in names:
-                    # If the ZIP file was created with Unicode names stored
-                    # in the file, 'name' will already be Unicode.
-                    # Otherwise, it'll either be 7-bit ASCII or (legacy)
-                    # cp437 encoding
-                    outname = name
-                    outpath = os.path.join(outdir, os.path.normpath(outname))
-                    if outname.endswith("/"):
-                        if not os.path.isdir(outpath):
-                            os.makedirs(outpath)
-                    elif not os.path.isfile(outpath):
-                        with open(outpath, "wb") as outfile:
-                            outfile.write(z.read(name))
+            raise
         return extracted
+
+    def _reopen_argyll_download_prompt(self):
+        """Re-open the Argyll download prompt after a failed archive download."""
+        if not self.owner:
+            return
+        from DisplayCAL.display_cal import app_update_check
+
+        app_update_check(self.owner, argyll=True)
 
     def set_argyll_bin(self, result, filename):
         """Set Argyll bin directory.
@@ -17683,7 +17755,16 @@ BEGIN_DATA
             filename (str): The archive filename.
         """
         if isinstance(result, Exception):
-            show_result_dialog(result, self.owner)
+            if not os.path.isfile(filename):
+                retry = show_result_dialog(
+                    result,
+                    self.owner,
+                    confirm=lang.getstr("retry"),
+                )
+                if retry:
+                    self._reopen_argyll_download_prompt()
+            else:
+                show_result_dialog(result, self.owner)
         elif result and os.path.isdir(result[0]):
             setcfg("argyll.dir", os.path.join(result[0], "bin"))
             # Always write cfg directly after setting Argyll directory so
@@ -17692,7 +17773,7 @@ BEGIN_DATA
             writecfg()
             from DisplayCAL.display_cal import check_donation
 
-            snapshot = VERSION > VERSION_BASE
+            snapshot = False
             self.owner.set_argyll_bin_handler(
                 None,
                 True,

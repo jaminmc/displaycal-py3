@@ -12,6 +12,7 @@ import re
 import string
 import subprocess as sp
 import sys
+import time
 import urllib.error
 import urllib.request
 from functools import cache
@@ -255,7 +256,10 @@ def set_argyll_bin(
     parent = None if parent and not parent.IsShownOnScreen() else parent
     argyll_dir = prompt_argyll_dir(parent, callafter, callafter_args)
     if parent and not check_argyll_bin():
-        choices = [("download", lang.getstr("download")), ("browse", lang.getstr("browse"))]
+        choices = [
+            ("download", lang.getstr("download")),
+            ("browse", lang.getstr("browse")),
+        ]
         brew_argyll_bin = get_homebrew_argyll_bin()
         if brew_argyll_bin:
             choices.append(
@@ -565,12 +569,23 @@ def get_argyll_latest_version() -> str:
     """
     argyll_domain = config.DEFAULTS.get("argyll.domain", "")
     default_version = config.DEFAULTS.get("argyll.version")
-    try:
-        response = urllib.request.urlopen(f"{argyll_domain}/log.txt", timeout=20)  # noqa: S310
-        data = response.read(512).decode("utf-8", "replace")
-    except (urllib.error.URLError, OSError, TimeoutError) as exception:
-        print(f"Could not fetch ArgyllCMS latest version: {exception}")
-        return default_version
+    # Try multiple times to fetch the version in case of transient network issues...
+    retries = 3
+    while retries > 0:
+        try:
+            response = urllib.request.urlopen(f"{argyll_domain}/log.txt", timeout=20)  # noqa: S310
+            data = response.read(512).decode("utf-8", "replace")
+            break
+        except (urllib.error.URLError, OSError, TimeoutError) as exception:
+            retries -= 1
+            if retries == 0:
+                print(f"Could not fetch ArgyllCMS latest version: {exception}")
+                return default_version
+            else:
+                print(
+                    f"Error fetching ArgyllCMS latest version: {exception}. Retrying..."
+                )
+            time.sleep(5)
     changelog = re.search(r"Version\s+([0-9][0-9A-Za-z.\-_]*)", data)
     if not changelog:
         print(

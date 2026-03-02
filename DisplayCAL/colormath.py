@@ -12,16 +12,17 @@ import logging
 import math
 import sys
 import warnings
-from typing import Any, Callable, overload
+from typing import TYPE_CHECKING, Any, Callable, overload
 
 import numpy
 
 from DisplayCAL.debughelpers import DEBUG
 
-if sys.version_info >= (3, 11):
-    from typing import Self
-else:
-    from typing_extensions import Self
+if TYPE_CHECKING:
+    if sys.version_info >= (3, 11):
+        from typing import Self
+    else:
+        from typing_extensions import Self
 
 
 logger = logging.getLogger(__name__)
@@ -6634,6 +6635,14 @@ CAT_MATRICES = {
     ),
     # Inverse CIE 2012 2deg LMS to XYZ matrix from Argyll/icc/icc.c
     "CIE2012_2": Matrix3x3(
+        [
+            [0.2052445519046028, 0.8334486497310412, -0.0386932016356441],
+            [-0.4972221301804286, 1.4034846060306130, 0.0937375241498157],
+            [0.0000000000000000, 0.0000000000000000, 1.0000000000000000],
+        ]
+    ),
+    # Inverse CIE 2015 2deg LMS to XYZ matrix from Argyll/icc/icc.c
+    "CIE2015_2": Matrix3x3(
         [
             [0.2052445519046028, 0.8334486497310412, -0.0386932016356441],
             [-0.4972221301804286, 1.4034846060306130, 0.0937375241498157],

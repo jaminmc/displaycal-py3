@@ -53,7 +53,7 @@ from wx.lib import delayedresult, platebtn
 from wx.lib.art import flagart
 from wx.lib.scrolledpanel import ScrolledPanel
 
-# Custom modules
+# Local Imports
 from DisplayCAL import (
     audio,
     ccmx,
@@ -164,10 +164,8 @@ from DisplayCAL.meta import (
     AUTHOR,
     DEVELOPMENT_HOME_PAGE,
     DOMAIN,
-    VERSION,
-    VERSION_BASE,
-    VERSION_SHORT,
     VERSION_STRING,
+    VERSION_TUPLE,
     get_latest_changelog_entry,
 )
 from DisplayCAL.meta import (
@@ -344,7 +342,9 @@ def verbose_print(*args, **kwargs) -> None:
         print(*args, **kwargs)
 
 
-def set_platebutton_bitmaps(button: PlateButton, icon_name: str, size: int = 16) -> None:
+def set_platebutton_bitmaps(
+    button: PlateButton, icon_name: str, size: int = 16
+) -> None:
     """Set normal/hover/disabled bitmaps with crash-safe hover color lookup."""
     hover_suffix = ""
     if not SAFE_WX_UI:
@@ -399,13 +399,13 @@ def app_update_check(
         chglog_file = "Argyll/ChangesSummary.html"
     elif snapshot:
         # Snapshot
-        curversion_tuple = VERSION
+        curversion_tuple = VERSION_TUPLE
         version_file = "SNAPSHOT_VERSION"
         chglog_file = "SNAPSHOT_CHANGES.html"
     else:
         # Stable
         print(lang.getstr("update_check"))
-        curversion_tuple = VERSION_BASE
+        curversion_tuple = VERSION_TUPLE
         version_file = "VERSION"
         chglog_file = "CHANGES.html"
     resp = http_request(
@@ -484,7 +484,7 @@ def app_update_check(
             argyll,
             silent,
         )
-    elif not argyll and not snapshot and VERSION > VERSION_BASE:
+    elif not argyll and not snapshot:
         app_update_check(parent, silent, True)
     elif not argyll:
         print(lang.getstr("update_check.uptodate", APPNAME))
@@ -523,11 +523,10 @@ def check_donation(parent: wx.Window, snapshot: bool) -> None:
         parent (wx.Window): Parent window to show the dialog.
         snapshot (bool): If True, the application is a snapshot build.
     """
-    if not snapshot and VERSION[0] > next(
-        iter(intlist(getcfg("last_launch").split(".")))
-    ):
+    if not snapshot and VERSION_TUPLE[0] > intlist(getcfg("last_launch", "0.0.0").split("."))[0]:
         setcfg("show_donation_message", 1)
-    setcfg("last_launch", VERSION_STRING)
+        # store the current version as the last_launch version
+        setcfg("last_launch", VERSION_STRING)
     if getcfg("show_donation_message"):
         wx.CallAfter(donation_message, parent)
 
@@ -729,7 +728,10 @@ def app_update_confirm(
                         # Keep x86_64 as fallback on Intel and unknown machine ids.
                         suffix = "_osx10.6_x86_64_bin.tgz"
                 # Linux
-                elif machine in ("x86_64", "amd64") or platform.architecture()[0] == "64bit":
+                elif (
+                    machine in ("x86_64", "amd64")
+                    or platform.architecture()[0] == "64bit"
+                ):
                     # Assume x86_64
                     suffix = "_linux_x86_64_bin.tgz"
                 else:
@@ -2253,9 +2255,7 @@ class MainFrame(ReportFrame, BaseFrame, LUT3DMixin):
         # UGLY HACK: This 'print' call fixes a GTK assertion and
         # segfault under Arch Linux when setting the window title
         print("")
-        title = f"{APPNAME} {VERSION_SHORT}"
-        if VERSION > VERSION_BASE:
-            title += " Beta"
+        title = f"{APPNAME} {VERSION_STRING}"
         self.SetTitle(title)
         self.SetMaxSize((-1, -1))
         self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], APPNAME))
@@ -3683,9 +3683,11 @@ class MainFrame(ReportFrame, BaseFrame, LUT3DMixin):
         # frame insertion
         self.ffp_insertion.Bind(
             wx.EVT_CHECKBOX,
-            lambda event: setcfg("patterngenerator.ffp_insertion", event.GetInt())
-            or self.update_ffp_insertion_ctrl()
-            or self.update_estimated_measurement_times(),
+            lambda event: (
+                setcfg("patterngenerator.ffp_insertion", event.GetInt())
+                or self.update_ffp_insertion_ctrl()
+                or self.update_estimated_measurement_times()
+            ),
         )
         min_val, max_val = config.VALID_RANGES[
             "patterngenerator.ffp_insertion.interval"
@@ -3693,10 +3695,10 @@ class MainFrame(ReportFrame, BaseFrame, LUT3DMixin):
         self.ffp_insertion_interval.SetRange(min_val, max_val)
         self.ffp_insertion_interval.Bind(
             floatspin.EVT_FLOATSPIN,
-            lambda event: setcfg(
-                "patterngenerator.ffp_insertion.interval", event.GetValue()
-            )
-            or self.update_estimated_measurement_times(),
+            lambda event: (
+                setcfg("patterngenerator.ffp_insertion.interval", event.GetValue())
+                or self.update_estimated_measurement_times()
+            ),
         )
         min_val, max_val = config.VALID_RANGES[
             "patterngenerator.ffp_insertion.duration"
@@ -3704,10 +3706,10 @@ class MainFrame(ReportFrame, BaseFrame, LUT3DMixin):
         self.ffp_insertion_duration.SetRange(min_val, max_val)
         self.ffp_insertion_duration.Bind(
             floatspin.EVT_FLOATSPIN,
-            lambda event: setcfg(
-                "patterngenerator.ffp_insertion.duration", event.GetValue()
-            )
-            or self.update_estimated_measurement_times(),
+            lambda event: (
+                setcfg("patterngenerator.ffp_insertion.duration", event.GetValue())
+                or self.update_estimated_measurement_times()
+            ),
         )
         self.ffp_insertion_level.Bind(
             wx.EVT_SPINCTRL,
@@ -9783,7 +9785,7 @@ class MainFrame(ReportFrame, BaseFrame, LUT3DMixin):
         report_type = "Self Check" if self_check_report else "Measurement"
         default_file = "{} Report {} - {} - {}".format(
             report_type,
-            VERSION_SHORT,
+            VERSION_STRING,
             re.sub(
                 r"[\\/:;*?\"<>|]+",
                 "_",
@@ -10564,7 +10566,7 @@ class MainFrame(ReportFrame, BaseFrame, LUT3DMixin):
             "${CAL_ENTRYCOUNT}": str(cal_entrycount),
             "${CAL_RGBLEVELS}": repr(cal_rgblevels),
             "${GRAYSCALE}": repr(gray) if gray else "null",
-            "${REPORT_VERSION}": VERSION_SHORT,
+            "${REPORT_VERSION}": VERSION_STRING,
             "${REPORT_TYPE}": report_type,
         }
 
@@ -10936,15 +10938,21 @@ class MainFrame(ReportFrame, BaseFrame, LUT3DMixin):
         display_name = config.get_display_name(None, True)
         if display_name == "Web @ localhost" or display_name.startswith("Chromecast "):
             for name, patterngenerator in list(self.worker.patterngenerators.items()):
-                if isinstance(
-                    patterngenerator,
-                    (WebWinHTTPPatternGeneratorServer, ChromeCastPatternGenerator),
+                if (
+                    display_name.startswith("Chromecast ")
+                    and ChromeCastPatternGenerator
+                    and isinstance(patterngenerator, ChromeCastPatternGenerator)
                 ):
-                    # Need to free connection for dispwin
+                    # Chromecast uses a single client session; reset it so dispwin
+                    # can establish a fresh connection for each run.
                     patterngenerator.disconnect_client()
-                    if isinstance(patterngenerator, WebWinHTTPPatternGeneratorServer):
-                        patterngenerator.server_close()
                     self.worker.patterngenerators.pop(name)
+                elif display_name == "Web @ localhost" and isinstance(
+                    patterngenerator, WebWinHTTPPatternGeneratorServer
+                ):
+                    # Keep WebWin server running and reusable between setup/test
+                    # and interactive adjustment steps to avoid reconnect churn.
+                    continue
         elif not self.setup_patterngenerator(self):
             return
         writecfg()
@@ -12067,7 +12075,9 @@ class MainFrame(ReportFrame, BaseFrame, LUT3DMixin):
         setcfg("last_specplot_path", path)
         cmd = get_argyll_util("specplot")
         if not cmd:
-            show_result_dialog(Error(lang.getstr("argyll.util.not_found", "specplot")), self)
+            show_result_dialog(
+                Error(lang.getstr("argyll.util.not_found", "specplot")), self
+            )
             return
         args = ["-v"]
         if getcfg("extra_args.specplot").strip():
@@ -12409,8 +12419,6 @@ class MainFrame(ReportFrame, BaseFrame, LUT3DMixin):
                 if options_dispcal and self.recent_cals[sel] == cal:
                     self.recent_cals.remove(cal)
                     self.calibration_file_ctrl.Delete(sel)
-                if getcfg("settings.changed"):
-                    self.settings_discard_changes()
                 if options_dispcal and options_colprof:
                     self.load_cal_handler(
                         None,
@@ -16827,11 +16835,12 @@ class MainFrame(ReportFrame, BaseFrame, LUT3DMixin):
         Args:
             event (wx.Event, optional): The event triggered by the control.
         """
-        debug_print(
-            "[D] measurement_mode_ctrl_handler called for ID "
-            f"{event.GetId()} {getevtobjname(event, self)} event type "
-            f"{event.GetEventType()} {getevttype(event)}"
-        )
+        if event is not None:
+            debug_print(
+                "[D] measurement_mode_ctrl_handler called for ID "
+                f"{event.GetId()} {getevtobjname(event, self)} event type "
+                f"{event.GetEventType()} {getevttype(event)}"
+            )
         v = self.get_measurement_mode()
         if v and "p" in v and self.worker.argyll_version < [1, 1, 0]:
             self.measurement_mode_ctrl.SetSelection(
@@ -19658,7 +19667,7 @@ class MainFrame(ReportFrame, BaseFrame, LUT3DMixin):
         if not path:
             return
 
-        if getcfg("settings.changed") and not self.settings_confirm_discard():
+        if getcfg("settings.changed"):
             return
 
         if not os.path.exists(path):
@@ -21310,9 +21319,7 @@ class MainFrame(ReportFrame, BaseFrame, LUT3DMixin):
         separator.BackgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT)
         items.append(separator)
         items.append((1, 12))
-        version_title = VERSION_SHORT
-        if VERSION > VERSION_BASE:
-            version_title += " Beta"
+        version_title = VERSION_STRING
         items.append(
             [
                 HyperLinkCtrl(
@@ -21692,8 +21699,7 @@ class StartupFrame(start_cls):
 
     def __init__(self) -> None:
         super().__init__()
-        title = f"{APPNAME} {VERSION_SHORT}"
-        title += " Beta" if VERSION > VERSION_BASE else ""
+        title = f"{APPNAME} {VERSION_STRING}"
         start_cls.__init__(
             self,
             None,
@@ -22136,7 +22142,7 @@ class StartupFrame(start_cls):
             wx.CallAfter(
                 app.frame.check_instrument_setup,
                 check_donation,
-                (app.frame, VERSION > VERSION_BASE),
+                (app.frame, False),
             )
         # If resources are missing, XRC shows an error dialog which immediately
         # gets hidden when we close ourselves because we are the parent.
@@ -22210,9 +22216,7 @@ class StartupFrame(start_cls):
         )
         dc.SetFont(self.GetFont())
         # Version label
-        label_str = VERSION_SHORT
-        if VERSION > VERSION_BASE:
-            label_str += " Beta"
+        label_str = VERSION_STRING
         dc.SetTextForeground("#101010")
         yoff = 10
         scale = getcfg("app.dpi") / config.get_default_dpi()

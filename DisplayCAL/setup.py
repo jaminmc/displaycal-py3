@@ -215,7 +215,9 @@ plist_dict = {
     "CFBundleSignature": "????",
     "CFBundleVersion": ".".join(map(str, VERSION_TUPLE)),
     "NSHumanReadableCopyright": f"© {strftime('%Y')} {AUTHOR}",
-    "LSMinimumSystemVersion": "10.6.0",
+    "LSMinimumSystemVersion": "11.0", # Required for native ARM64 support
+    "com.apple.security.cs.disable-library-validation": True, # Critical fix
+    "com.apple.security.cs.allow-unsigned-executable-memory": True,
 }
 
 
@@ -321,8 +323,10 @@ def create_app_symlinks(dist_dir: str, scripts: list[tuple[str, str]]) -> None:
                             tgt,
                         )
             elif entry == "Info.plist":
-                with codecs.open(
-                    os.path.join(dist_dir, maincontents_rel, entry), "r", "UTF-8"
+                with open(
+                    os.path.join(dist_dir, maincontents_rel, entry),
+                    "r",
+                    encoding="utf-8",
                 ) as info_in:
                     infoxml = info_in.read()
                 # CFBundleName / CFBundleDisplayName
@@ -343,8 +347,8 @@ def create_app_symlinks(dist_dir: str, scripts: list[tuple[str, str]]) -> None:
                     lambda match, script=script: match.group(1) + script,
                     infoxml,
                 )
-                with codecs.open(
-                    os.path.join(toolcontents, entry), "w", "UTF-8"
+                with open(
+                    os.path.join(toolcontents, entry), "w", encoding="utf-8"
                 ) as info_out:
                     info_out.write(infoxml)
             else:
@@ -359,7 +363,7 @@ def get_data(
     key: str,
     pkgname: None | str = None,
     subkey: None | str = None,
-    excludes: None | list[str] = None
+    excludes: None | list[str] = None,
 ) -> list[tuple[str, list[str]]]:
     """Return configured data files.
 
@@ -1032,7 +1036,9 @@ def setup() -> None:
         # Modern py2app build flow errors out when install_requires is present.
         # Keep runtime metadata for normal installs, but skip it for app/exe bundling.
         if not do_py2app and not do_py2exe:
-            install_requires = [req.replace("(", "").replace(")", "") for req in requires]
+            install_requires = [
+                req.replace("(", "").replace(")", "") for req in requires
+            ]
             attrs["install_requires"] = install_requires
         attrs["zip_safe"] = False
     else:
@@ -1089,9 +1095,7 @@ def setup() -> None:
         py2app_cls._copy_package_data = py2app_cls.copy_package_data
 
         def copy_package_data(
-            self: py2app_cls,
-            package: Package,
-            target_dir: str
+            self: py2app_cls, package: Package, target_dir: str
         ) -> None:
             """Override copy_package_data to skip package data from other packages.
 
@@ -1131,7 +1135,13 @@ def setup() -> None:
         import wx
         from winmanifest_util import getmanifestxml
 
-        arch = "amd64" if platform.architecture()[0] == "64bit" else "x86"
+        machine = platform.machine().lower()
+        if "arm" in machine or "aarch64" in machine:
+            arch = "arm64"
+        elif "64" in platform.architecture()[0]:
+            arch = "amd64"
+        else:
+            arch = "x86"
         manifest_xml = getmanifestxml(
             os.path.join(
                 pydir,
@@ -1552,7 +1562,6 @@ def setup() -> None:
             [
                 "include LICENSE.txt",
                 "include VERSION",
-                "include VERSION_BASE",
                 "include MANIFEST",
                 "include MANIFEST.in",
                 "include README.html",
@@ -1679,6 +1688,11 @@ def setup() -> None:
                 )
                 print("Copying", pil_installed_dylibs, "->", pil_dylibs)
                 shutil.copytree(pil_installed_dylibs, pil_dylibs)
+                # ADD THIS: Remove existing signatures so the later deep-sign works properly
+                for root, dirs, files in os.walk(pil_dylibs):
+                    for file in files:
+                        if file.endswith(".dylib"):
+                            os.system(f"codesign --remove-signature '{os.path.join(root, file)}'")
                 for entry in os.listdir(pil_dylibs):
                     print(os.path.join(pil_dylibs, entry))
                 # Remove wrongly included frameworks

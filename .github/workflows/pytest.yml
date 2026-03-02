@@ -8,6 +8,11 @@ on:
     branches:
       - develop
 
+# Centralized variables for easy updates
+env:
+  ARGYLL_VERSION: "3.5.0"
+  ARGYLL_REPO: "https://github.com/eoyilmaz/argyllcms-binaries/releases/download"
+
 jobs:
   linux:
     name: Linux + Python ${{ matrix.python-version }} + wxPython ${{ matrix.wx-version }}
@@ -19,22 +24,91 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version:
-          - "3.9"
-          - "3.10"
-          - "3.11"
-          - "3.12"
-          - "3.13"
-        wx-version:
-          - "4.2.2"
-          - "4.2.3"
+        include:
+          # tedious but easier... As we do not have all wxPython version for
+          # all other Python versions, and more so the wxPython package name
+          # changes from "wxPython" to "wxpython" for 4.2.3 and up...
+
+          # Python 3.9
+          - python-version: "3.9"
+            wx-version: "4.2.2"
+            wx_name: "wxPython"
+          - python-version: "3.9"
+            wx-version: "4.2.3"
+            wx_name: "wxpython"
+          - python-version: "3.9"
+            wx-version: "4.2.4"
+            wx_name: "wxpython"
+
+          # Python 3.10
+          - python-version: "3.10"
+            wx-version: "4.2.2"
+            wx_name: "wxPython"
+          - python-version: "3.10"
+            wx-version: "4.2.3"
+            wx_name: "wxpython"
+          - python-version: "3.10"
+            wx-version: "4.2.4"
+            wx_name: "wxpython"
+          - python-version: "3.10"
+            wx-version: "4.2.5"
+            wx_name: "wxpython"
+
+          # Python 3.11
+          - python-version: "3.11"
+            wx-version: "4.2.2"
+            wx_name: "wxPython"
+          - python-version: "3.11"
+            wx-version: "4.2.3"
+            wx_name: "wxpython"
+          - python-version: "3.11"
+            wx-version: "4.2.4"
+            wx_name: "wxpython"
+          - python-version: "3.11"
+            wx-version: "4.2.5"
+            wx_name: "wxpython"
+
+          # Python 3.12
+          - python-version: "3.12"
+            wx-version: "4.2.2"
+            wx_name: "wxPython"
+          - python-version: "3.12"
+            wx-version: "4.2.3"
+            wx_name: "wxpython"
+          - python-version: "3.12"
+            wx-version: "4.2.4"
+            wx_name: "wxpython"
+          - python-version: "3.12"
+            wx-version: "4.2.5"
+            wx_name: "wxpython"
+
+          # Python 3.13
+          - python-version: "3.13"
+            wx-version: "4.2.2"
+            wx_name: "wxPython"
+          - python-version: "3.13"
+            wx-version: "4.2.3"
+            wx_name: "wxpython"
+          - python-version: "3.13"
+            wx-version: "4.2.4"
+            wx_name: "wxpython"
+          - python-version: "3.13"
+            wx-version: "4.2.5"
+            wx_name: "wxpython"
+
+          # Python 3.14
+          - python-version: "3.14"
+            wx-version: "4.2.4"
+            wx_name: "wxpython"
+          - python-version: "3.14"
+            wx-version: "4.2.5"
+            wx_name: "wxpython"
 
     steps:
     - uses: actions/checkout@v4
 
     - name: Setup xvfb
       run: |
-        sudo apt-get update
         sudo apt-get install -y xvfb \
             libxkbcommon-x11-0 \
             libxcb-icccm4 \
@@ -52,13 +126,19 @@ jobs:
       run: |
         sudo apt-get install -y libnotify4
 
+    - name: Install ArgyllCMS (Linux)
+      run: |
+        curl -L "${{ env.ARGYLL_REPO }}/${{ env.ARGYLL_VERSION }}/Argyll_V${{ env.ARGYLL_VERSION }}_linux_x86_64_bin.tgz" -o argyll.tgz
+        mkdir argyllcms
+        tar -xzf argyll.tgz -C argyllcms --strip-components=1
+        echo "$GITHUB_WORKSPACE/argyllcms/bin" >> $GITHUB_PATH
+
     - name: Setup Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: Install system dependencies
-      timeout-minutes: 15
       run: |
         set -euxo pipefail
         packages="$(awk '!/^\s*(#|$)/ { print $1 }' packages.list | xargs)"
@@ -85,10 +165,7 @@ jobs:
       run: |
         py_version="${{ matrix.python-version }}"
         py_version="${py_version//./}"
-        wx_name="wxPython"
-        if [ "${{ matrix.wx-version }}" == "4.2.3" ]; then
-          wx_name="wxpython"
-        fi
+        wx_name="${{ matrix.wx_name}}"
         uv pip install --system "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-22.04/${wx_name}-${{ matrix.wx-version }}-cp${py_version}-cp${py_version}-linux_x86_64.whl"
 
     - name: Install Python dependencies
@@ -99,14 +176,13 @@ jobs:
       run: |
         sudo chmod a+rw /etc/udev/rules.d
         python3 -m build
-        ls -l dist/
         wheel_file=$(ls dist/*.whl)
         echo wheel_file=$wheel_file
         uv pip install --system $wheel_file
 
     - name: Test with pytest
       run: |
-        python -m pytest --verbose -n auto -W ignore --color=yes -m "not network" --cov=./DisplayCAL --cov-report html
+        python -m pytest --verbose -n auto -W ignore --color=yes -m "not network" --cov=./DisplayCAL --cov-report html  --durations=50
 
     - name: Archive code coverage results
       uses: actions/upload-artifact@v4
@@ -129,9 +205,23 @@ jobs:
         wx-version:
           - "4.2.2"
           - "4.2.3"
+          - "4.2.4"
+          - "4.2.5"
+        exclude:
+          - wx-version: "4.2.5"
+            python-version: "3.9"
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Install ArgyllCMS (Windows)
+      run: |
+        $url = "${{ env.ARGYLL_REPO }}/${{ env.ARGYLL_VERSION }}/Argyll_V${{ env.ARGYLL_VERSION }}_win64_exe.zip"
+        Invoke-WebRequest -Uri $url -OutFile "argyll.zip"
+        Expand-Archive -Path "argyll.zip" -DestinationPath "$env:USERPROFILE\argyllcms"
+        $binPath = Get-ChildItem -Path "$env:USERPROFILE\argyllcms\*\bin" | Select-Object -First 1
+        echo $binPath.FullName >> $env:GITHUB_PATH
+      shell: pwsh
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
@@ -173,7 +263,7 @@ jobs:
 
     - name: Test with pytest
       run: |
-        python -m pytest --verbose -n auto -W ignore --color=yes -m "not network" --cov=./DisplayCAL --cov-report html
+        python -m pytest --verbose -n auto -W ignore --color=yes -m "not network" --cov=./DisplayCAL --cov-report html  --durations=50
 
     - name: Archive code coverage results
       uses: actions/upload-artifact@v4
@@ -183,20 +273,40 @@ jobs:
         retention-days: 10
 
   macos:
-    name: macOS + Python ${{ matrix.python-version }}
+    name: macOS + Python ${{ matrix.python-version }} + wxPython ${{ matrix.wx-version }}
     runs-on: macos-14
 
     strategy:
       fail-fast: false
       matrix:
+        # for now we just care about the Python version.
+        # After the workflow stabilizes we introduce different wxPython versions
+        # too...
         python-version:
           - "3.11"
           - "3.12"
           - "3.13"
           - "3.14"
+        wx-version:
+          - "4.2.2"
+          - "4.2.3"
+          - "4.2.4"
+          - "4.2.5"
+        exclude:
+          - wx-version: "4.2.2"
+            python-version: "3.14"
+          - wx-version: "4.2.3"
+            python-version: "3.14"
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Install ArgyllCMS (macOS arm64)
+      run: |
+        curl -L "${{ env.ARGYLL_REPO }}/${{ env.ARGYLL_VERSION }}/Argyll_V${{ env.ARGYLL_VERSION }}_macOS11_arm64_bin.tgz" -o argyll.tgz
+        mkdir argyllcms
+        tar -xzf argyll.tgz -C argyllcms --strip-components=1
+        echo "$GITHUB_WORKSPACE/argyllcms/bin" >> $GITHUB_PATH
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
@@ -211,6 +321,10 @@ jobs:
     - name: Install wheel helper
       run: uv pip install --system wheel
 
+    - name: Install wxPython ${{ matrix.wx-version }}
+      run: |
+        uv pip install --system wxPython==${{ matrix.wx-version }}
+
     - name: Install Python dependencies
       run: |
         uv pip install --system -r requirements-tests.txt -r requirements-dev.txt
@@ -224,11 +338,11 @@ jobs:
 
     - name: Test with pytest
       run: |
-        python -m pytest --verbose -n auto -W ignore --color=yes -m "not network" --cov=./DisplayCAL --cov-report html
+        python -m pytest --verbose -n auto -W ignore --color=yes -m "not network" --cov=./DisplayCAL --cov-report html --durations=50
 
     - name: Archive code coverage results
       uses: actions/upload-artifact@v4
       with:
-        name: code-coverage-report-${{ matrix.python-version }}-macos
+        name: code-coverage-report-${{ matrix.python-version }}-${{ matrix.wx-version }}-macos
         path: htmlcov
         retention-days: 10
